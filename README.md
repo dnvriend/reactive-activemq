@@ -1,29 +1,45 @@
 # reactive-activemq v0.0.1 
-[![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 An akka-streams __lineair-flow only__ compatible `ActiveMqSource` and `ActiveMqSink` that can consume messages from an ActiveMq `queue` and 
 produce messages to an ActiveMq `topic` leveraging backpressure aware lineair flow and ActiveMq VirtualTopics. This project is 
 very much work in progress.
 
 This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
 
+Service | Status | Description
+------- | ------ | -----------
+License | [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) | Apache 2.0
+Bintray | [![Download](https://api.bintray.com/packages/dnvriend/maven/reactive-activemq/images/download.svg)](https://bintray.com/dnvriend/maven/reactive-activemq/_latestVersion) | Latest Version on Bintray
+
+## Installation
+Add the following to your `build.sbt`:
+
+```scala
+resolvers += Resolver.jcenterRepo
+
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.1"
+```
+
 ## Limitations
+- It is very new,
+- Implementation is very sketchy,
+- Very limited number of combinators (but enough for my use case),
 - Ony supports simple lineair flows,
-- Only supports simple convenience operations:
+- Only supports a small number of convenience combinators:
   - `fmap`: the map operation, but exposes only the payload, does not ack the message,
   - `fmapAck`: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
   - `fmapAsync`: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
   - `runForeachAck`: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
-- Implementation is very sketchy,
-- Very limited number of combinators, but enough for my use case.
 
 ## Why use it?
-Good question! The project is very young, so only use it when you really like the akka-stream API. 
-I use it to combine consuming messages from ActiveMq with akka-persistence and/or the akka-persistence-query API.
+Good question! The project is very new, so only use it when you really like the akka-stream API. 
+I use it to combine consuming messages from ActiveMq with akka-persistence and/or the akka-persistence-query API to ActiveMq,
+and nothing beats reading a simple lineair flow using akka-stream!
 
 ## Todo:
 - Testing,
-- More combinators?? I only need fmap and fmapAsync, filters, collect etc only introduce more problems,
-- Custom Source/Sink so that the standard non-acking stages cannot be used ??
+- Better implementation ??,
+- More combinators?? I only need fmap and fmapAsync, filters, collect etc only introduce more problems ie. removing filtered messages from the broker,
+- Custom Source/Sink so that the standard non-acking stages cannot be used ?? just like [op-rabbit][op-rabbit],
 
 ## Consuming from a queue
 To consume from a queue: 

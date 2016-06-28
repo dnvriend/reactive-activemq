@@ -41,9 +41,7 @@ class CamelConsumer[A](val endpointUri: String)(implicit extractor: MessageExtra
         onNext((sender(), extractor.extract(msg)))
       } catch {
         case t: Throwable ⇒
-          println("Removing message from the broker because of error while extracting the message: " + t.getMessage)
           log.error(t, "Removing message from the broker because of error while extracting the message")
-          // remove the message from the broker
           sender() ! akka.camel.Ack
       }
 

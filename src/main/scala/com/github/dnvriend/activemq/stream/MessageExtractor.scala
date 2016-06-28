@@ -19,7 +19,3 @@ package com.github.dnvriend.activemq.stream
 trait MessageExtractor[IN, OUT] {
   def extract(in: IN): OUT
 }
-
-object MessageExtractor {
-
-}

@@ -1,4 +1,6 @@
 # reactive-activemq v0.0.1 
+
+[![Join the chat at https://gitter.im/dnvriend/reactive-activemq](https://badges.gitter.im/dnvriend/reactive-activemq.svg)](https://gitter.im/dnvriend/reactive-activemq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 An akka-streams __lineair-flow only__ compatible `ActiveMqSource` and `ActiveMqSink` that can consume messages from an ActiveMq `queue` and 
 produce messages to an ActiveMq `topic` leveraging backpressure aware lineair flow and ActiveMq VirtualTopics. This project is 
 very much work in progress.

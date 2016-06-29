@@ -26,6 +26,6 @@ import scala.concurrent.Future
 class ActiveMqSinkTest extends TestSpec {
   it should "send numbers to topic" in {
     def send = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(nr ⇒ List.fill(10)(nr)).runWith(ActiveMqSink("producer1"))
-    Future.sequence(List.fill(1)(send)).futureValue
+    Future.sequence(List.fill(5)(send)).futureValue
   }
 }

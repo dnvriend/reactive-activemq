@@ -16,101 +16,88 @@
 
 package com.github.dnvriend.activemq.extension
 
-import akka.actor.{ Actor, ActorLogging, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider, Props }
+import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
 import akka.camel.CamelExtension
-import akka.util.Timeout
-import com.github.dnvriend.activemq.extension.Cache.{ ConsumerFor, ProducerFor }
 import com.typesafe.config.Config
 import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
 
-import scala.concurrent.{ Await, Future }
+case class ActiveMqConfig(
+  host: String = "boot2docker",
+  port: String = "amq",
+  user: String = "amq",
+  pass: String = "amq"
+)
 
-case class ActiveMqConfig(name: String, host: String, port: String, user: String, pass: String)
+case class ConsumerConfig(
+  conn: String = "activemq",
+  queue: String = "test",
+  concurrentConsumers: String = "1"
+)
 
-case class ConsumerConfig(consumerName: String, queue: String)
-
-case class ProducerConfig(topic: String)
+case class ProducerConfig(
+  conn: String = "activemq",
+  topic: String = "test"
+)
 
 object ActiveMqExtension extends ExtensionId[ActiveMqExtensionImpl] with ExtensionIdProvider {
-
   override def createExtension(system: ExtendedActorSystem): ActiveMqExtensionImpl = new ActiveMqExtensionImpl(system)
 
   override def lookup(): ExtensionId[_ <: Extension] = ActiveMqExtension
 }
 
 trait ActiveMqExtension {
-  def consumerFor(name: String): String
-
-  def producerFor(name: String): Future[String]
-}
-
-object Cache {
-  case class ConsumerFor(name: String)
-  case class ProducerFor(name: String)
-}
-class Cache extends Actor with ActorLogging {
-  def activeMqConfig(config: Config) = ActiveMqConfig(
-    config.getString("conn.name"),
-    config.getString("conn.host"),
-    config.getString("conn.port"),
-    config.getString("conn.user"),
-    config.getString("conn.pass")
-  )
-
-  def consumerConfig(config: Config) = ConsumerConfig(
-    config.getString("name"),
-    config.getString("queue")
-  )
-
-  def producerConfig(config: Config) = ProducerConfig(config.getString("topic"))
-
-  def createComponent(amqConfig: ActiveMqConfig): Unit = {
-    log.debug("Creating component: {}", amqConfig)
-    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"nio://${amqConfig.host}:${amqConfig.port}")
-    val jmsConfiguration: JmsConfiguration = new JmsConfiguration()
-    jmsConfiguration.setConnectionFactory(connectionFactory)
-    val ctx = CamelExtension(context.system).context
-    val component = ctx.getComponent("activemq").asInstanceOf[ActiveMQComponent]
-    component.setConfiguration(jmsConfiguration)
-    component.setTransacted(true)
-    ctx.addComponent(amqConfig.name, component)
-  }
-
-  override def receive: Receive = cache(Vector.empty)
-
-  def cache(xs: Vector[String]): Receive = {
-    case ConsumerFor(name) ⇒
-      val cfg = consumerConfig(context.system.settings.config.getConfig(name))
-      val amqConfig = activeMqConfig(context.system.settings.config.getConfig(name))
-      if (!xs.contains(amqConfig.name)) {
-        context.become(cache(xs :+ amqConfig.name))
-        createComponent(amqConfig)
-      }
-      sender() ! s"${amqConfig.name}:queue:Consumer.${cfg.consumerName}.VirtualTopic.${cfg.queue}?concurrentConsumers=1"
-
-    case ProducerFor(name) ⇒
-      val cfg = producerConfig(context.system.settings.config.getConfig(name))
-      val amqConfig = activeMqConfig(context.system.settings.config.getConfig(name))
-      if (!xs.contains(name)) {
-        context.become(cache(xs :+ name))
-        createComponent(amqConfig)
-      }
-      sender() ! s"${amqConfig.name}:topic:VirtualTopic.${cfg.topic}"
-  }
+  def consumerEndpointUri(consumerName: String): String
+  def producerEndpointUri(producerName: String): String
 }
 
 class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension with ActiveMqExtension {
-  import akka.pattern.ask
+  import scala.collection.JavaConversions._
+  system.settings.config.getStringList("reactive-activemq.connections").foreach { componentName ⇒
+    val amqConfig = activeMqConfig(system.settings.config.getConfig(componentName))
+    createComponent(componentName, amqConfig)
+  }
 
-  import scala.concurrent.duration._
-  val cache = system.actorOf(Props[Cache])
-  implicit val timeout = Timeout(10.seconds)
+  private def activeMqConfig(config: Config) = ActiveMqConfig(
+    config.getString("host"),
+    config.getString("port"),
+    config.getString("user"),
+    config.getString("pass")
+  )
 
-  def consumerFor(name: String): String =
-    Await.result((cache ? ConsumerFor(name)).mapTo[String], 10.seconds)
+  private def createComponent(componentName: String, amqConfig: ActiveMqConfig): Unit = {
+    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"nio://${amqConfig.host}:${amqConfig.port}")
+    val jmsConfiguration: JmsConfiguration = new JmsConfiguration()
+    jmsConfiguration.setConnectionFactory(connectionFactory)
+    val ctx = CamelExtension(system).context
+    val component = ctx.getComponent("activemq").asInstanceOf[ActiveMQComponent]
+    component.setConfiguration(jmsConfiguration)
+    component.setTransacted(true)
+    ctx.addComponent(componentName, component)
+  }
 
-  def producerFor(name: String): Future[String] =
-    (cache ? ProducerFor(name)).mapTo[String]
+  private def consumerConfig(config: Config) = ConsumerConfig(
+    config.getString("conn"),
+    config.getString("queue"),
+    config.getString("concurrentConsumers")
+  )
+
+  private def producerConfig(config: Config) = ProducerConfig(
+    config.getString("conn"),
+    config.getString("topic")
+  )
+
+  override def consumerEndpointUri(consumerName: String): String = {
+    val cfg = consumerConfig(system.settings.config.getConfig(consumerName))
+    import cfg._
+    s"$conn:queue:Consumer.$consumerName.VirtualTopic.$queue?concurrentConsumers=$concurrentConsumers"
+
+  }
+
+  override def producerEndpointUri(producerName: String): String = {
+    val cfg = producerConfig(system.settings.config.getConfig(producerName))
+    import cfg._
+    s"$conn:topic:VirtualTopic.$topic"
+  }
 }

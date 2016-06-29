@@ -26,12 +26,13 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object ActiveMqSink {
   import scala.collection.JavaConversions._
-  def apply[T](config: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] = {
+  def apply[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] = {
     val template = CamelExtension(system).template
     Flow[T].mapAsync(qos) {
       case payload ⇒
-        ActiveMqExtension(system).producerFor(config).map { uri ⇒
+        Future {
           val camelMessage = builder.build(payload)
+          val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
           template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
         }
     }.toMat(Sink.ignore)(Keep.right)

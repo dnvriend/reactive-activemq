@@ -50,8 +50,8 @@ class CamelConsumer[A](val endpointUri: String)(implicit extractor: MessageExtra
 }
 
 object ActiveMqSource {
-  def apply[A](name: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckTup[A], NotUsed] =
-    Source.actorPublisher[(ActorRef, A)](Props(new CamelConsumer[A](ActiveMqExtension(system).consumerFor(name))))
+  def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckTup[A], NotUsed] =
+    Source.actorPublisher[(ActorRef, A)](Props(new CamelConsumer[A](ActiveMqExtension(system).consumerEndpointUri(consumerName))))
       .viaMat(new AckedFlow)(Keep.none)
 }
 

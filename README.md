@@ -98,9 +98,9 @@ val f: Future[Done] = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(
 ## Example configuraton
 The [configuration][config] is based upon a free to use producer/consumer name, that will point to an [ActiveMq][amq] connection that 
 will be created by the [ActiveMqExtension][extension] when it creates the list of connections from the `reactive-activemq.connections` 
-config. 
+[config][config]. 
 
-The connections name must be the name of the connection configuration eg. `amq1`, will point to the `amq1` configuration which must
+The connections name must be the name of the connection [configuration][config] eg. `amq1`, will point to the `amq1` [configuration][config] which must
 contain the host, port, user and password fields. 
 
 Consumers are [ActiveMqSource][amqsource] components and are created using a consumer name. This consumer name must point to a [configuration][config]

@@ -23,9 +23,6 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 
 ## Limitations
 - It is very new,
-- Implementation is very sketchy,
-- Very limited number of combinators (but enough for my use case),
-- Ony supports simple [linear flows][linear],
 - Only supports a small number of convenience combinators on the [ActiveMqSource][amqsource].
 
 ## Why use it?
@@ -35,10 +32,10 @@ I use it to combine consuming messages from [ActiveMq][amq] with [akka-persisten
 simple [linear flow][linear] using [akka-streams][akka-streams]!
 
 ## Todo:
-- Testing,
-- Better implementation ??,
-- More combinators?? I only need fmap and fmapAsync, filters, collect etc only introduce more problems ie. removing filtered messages from the broker,
-- Custom Source/Sink so that the standard non-acking stages cannot be used ?? just like [op-rabbit][op-rabbit],
+- !! Testing !!,
+- ?? Better implementation ??,
+- ?? More combinators ??
+- ?? Custom Source/Sink so that the standard non-acking stages cannot be used ?? just like [op-rabbit][op-rabbit],
 
 ## ActiveMqSource
 [ActiveMqSource][amqsource] support the following convenience combinators:
@@ -46,9 +43,6 @@ simple [linear flow][linear] using [akka-streams][akka-streams]!
 - [fmapAck][fmapack]: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
 - [fmapAsync][fmapasync]: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
 - [runForeachAck][runforeach]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, [materializes][mat] the stream to a `Future[Done]`. 
-
-## ActiveMqSink
-[ActiveMqSink] should be able to be used on any graph
 
 ## Consuming from a queue
 To consume from a queue: 
@@ -81,6 +75,10 @@ object Consumer extends App {
   val f2: Future[Done] = ActiveMqSource("consumer2").fmap(foo ⇒ foo.copy(txt = foo.txt + "c2!")).runForeachAck(txt ⇒ println(txt + "c2"))
 }
 ```
+
+## ActiveMqSink
+[ActiveMqSink][amqsink] can be used on any graph as a Sink as long as there is an implicit [MessageBuilder][builder] in scope that 
+can convert a `T` into a [CamelMessage][msg]. It materializes into a `Future[Done]`.
 
 ## Producing to a VirtualTopic
 To produce to a [VirtualTopic][vt]:
@@ -164,7 +162,7 @@ producer1 {
 }
 ```
 
-# Architecture
+## Architecture
 The plugin is designed around the following choices:
 - Each queue will contain only one message type, we will call this type `T`,
 
@@ -220,7 +218,7 @@ A message will be left on the broker when:
 - Any of the normal combinators are used and the function has failed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
 - Basically when the promise has been completed with a failure somewhere in the stream,
  
-# Acknowledgement in streams
+## Acknowledgement in streams
 Akka streams only handles backpressure, *not* acknowledgements. Inspired by opt-rabbit, I have tried using the same approach
 leveraging akka-streams and akka-camel, using a transactional connection with ActiveMq, acking the messages when needed and failing
 when appropiate. 

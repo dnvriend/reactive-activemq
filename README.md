@@ -157,18 +157,45 @@ producer1 {
 }
 ```
 
-## Architecture
+# Architecture
 The plugin is designed around the following choices:
 - Each queue will contain only one message type, we will call this type `T`,
+
+## Consumers receive Messages
 - Consumers will consume from a queue using [VirtualTopic][vt] semantics: `activemq:queue:Consumer.ConsumerName.VirtualTopic.TopicName?concurrentConsumers=1`,
 - Consumers will be called [ActiveMqSource][amqsource],
 - Consumers need a [MessageExtractor][extractor]typeclass to extract messages to type `T`
+- Consumers have names that refer to a [configured][config] component using [Typesafe Config][typesafe-config],
+- Consumers will be implemented using [akka-streams][akka-streams] and are a `ActiveMqSource("consumerName")` and need an implicit [MessageExtractor][extractor] to consume/receive messages,
+
+## Consuming/Receiving and Extracting Messages
+The [ActiveMqSource][amqsource] needs an implicit [MessageExtractor][extractor] to convert a [CamelMessage][msg] to a `T`.
+ 
+- To extract the message, the typeclass pattern will be used which is a `MessageExtractor[IN, OUT]`,
+- `IN` will be defined as a [CamelMessage][msg],
+- `OUT` will be defined as a `T`,
+- [MessageExtractor][extractor] is therefor defined as: `MessageExtractor[CamelMessage, T]`,
+- The MessageExtractor is responsible for extracting the type T *and* extracting any relevant headers,
+- Having the MessageExtractor pluggable decouples the unmarshalling method.
+
+## Producers send Messages
 - Producers will produce to a topic using [VirtualTopic][vt] semantics: `activemq:topic:VirtualTopic.TopicName`,
 - Producers will be called [ActiveMqSink][amqsink],
-- Procuers need a `MessageBuilder` to create messages to send to a topic,
-- Consumers and producers have names that refer to a [configured][config] component using [Typesafe Config][typesafe-config],
-- Messages will be consumed using an `ActiveMqSource("consumerName")` and needs an implicit [MessageExtractor][extractor],
-- Messages will be produced using an `ActiveMqSink("producerName")` and needs an implicit `MessageBuilder`,
+- Producers need a `MessageBuilder` to create messages to send to a topic,
+- Producers have names that refer to a [configured][config] component using [Typesafe Config][typesafe-config],
+- Producers will be implemented using [akka-streams][akka-streams] and are a `ActiveMqSink("producerName")` and need an implicit `MessageBuilder` to produce/send messages,
+
+## Producing/Sending and Creating Messages
+The [ActiveMqSink][amqsink] needs an implicit [MessageBuilder][builder] to convert a `T` into a [CamelMessage][msg] that will be used to send
+a message to a [VirtualTopic][vt]. 
+
+- To build a message, the typeclass pattern will be used which is a `MessageBuilder[IN, CamelMessage]`,
+- `IN` will be defined as a `T` which will be whatever element is flowing though the stream,
+- `OUT` will be defined as a [CamelMessage][msg],
+- [MessageBuilder][builder] is therefor defined as: `MessageBuilder[T, CamelMessage]`,
+- The MessageBuilder is responsible for building the CamelMessage and setting any relevant headers thus all information must be 
+  available in `T`, the flowing element, any static information can be injected from global scope,
+- Having the MessageBuilder pluggable decouples the marshalling method.
 
 ## Removing messages from ActiveMq
 A message will be removed from the broker when:
@@ -185,28 +212,6 @@ A message will be left on the broker when:
 - The [runForeachAck][runforeach] operations runs the stream and the enclosed foreach operation fails, 
 - Any of the normal combinators are used and the function has failed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
 - Basically when the promise has been completed with a failure somewhere in the stream,
-
-## Consuming/Receiving and Extracting Messages
-The [ActiveMqSource][amqsource] needs an implicit [MessageExtractor][extractor] to convert a [CamelMessage][msg] to a `T`.
- 
-- To extract the message, the typeclass pattern will be used which is a `MessageExtractor[IN, OUT]`,
-- `IN` will be defined as a [CamelMessage][msg],
-- `OUT` will be defined as a `T`,
-- [MessageExtractor][extractor] is therefor defined as: `MessageExtractor[CamelMessage, T]`,
-- The MessageExtractor is responsible for extracting the type T *and* extracting any relevant headers,
-- Having the MessageExtractor pluggable decouples the unmarshalling method.
- 
-## Producing/Sending and Creating Messages
-The [ActiveMqSink][amqsink] needs an implicit [MessageBuilder][builder] to convert a `T` into a [CamelMessage][msg] that will be used to send
-a message to a [VirtualTopic][vt]. 
-
-- To build a message, the typeclass pattern will be used which is a `MessageBuilder[IN, CamelMessage]`,
-- `IN` will be defined as a `T` which will be whatever element is flowing though the stream,
-- `OUT` will be defined as a [CamelMessage][msg],
-- [MessageBuilder][builder] is therefor defined as: `MessageBuilder[T, CamelMessage]`,
-- The MessageBuilder is responsible for building the CamelMessage and setting any relevant headers thus all information must be 
-  available in `T`, the flowing element, any static information can be injected from global scope,
-- Having the MessageBuilder pluggable decouples the marshalling method.
  
 # Acknowledgement in streams
 Akka streams only handles backpressure, *not* acknowledgements. Inspired by opt-rabbit, I have tried using the same approach

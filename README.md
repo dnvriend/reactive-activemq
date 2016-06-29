@@ -168,6 +168,22 @@ The plugin is designed around the following choices:
 - Messages will be consumed using an `ActiveMqSource("consumerName")` and needs an implicit `MessageExtractor`,
 - Messages will be produced using an `ActiveMqSink("producerName")` and needs an implicit `MessageBuilder`,
 
+## Removing messages from ActiveMq
+A message will be removed from the broker when:
+- A message cannot be extracted/unmarshalled by the `ActiveMqSource` ie. the `MessageExtractor` throws an exception,
+- The `fmapAck`, `fmapAsync` combinator is used and the operation succeeds,
+- The `runForeachAck` operations runs the stream and the enclosed foreach operation succeeds, 
+- Any of the normal combinators are used and the function has completed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
+- Basically when the promise has been completed with a success somewhere in the stream,
+
+## Leaving messages on ActiveMq
+A message will be left on the broker when:
+- When the `akka.camel.consumer.reply-timeout = 1m` has been triggered,
+- The `fmapAck`, `fmapAsync` combinator is used and the operation fails,
+- The `runForeachAck` operations runs the stream and the enclosed foreach operation fails, 
+- Any of the normal combinators are used and the function has failed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
+- Basically when the promise has been completed with a failure somewhere in the stream,
+
 ## Extracting Messages
 - To extract the message, the typeclass pattern will be used which is a `MessageExtractor[IN, OUT]`,
 - `IN` will be defined as a `CamelMessage`

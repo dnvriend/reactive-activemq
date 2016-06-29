@@ -108,7 +108,7 @@ for example, `consumer1` (bad idea to use this name) and will use a connection, 
 will use a number of concurrent connections. The endpointUri that the [ActiveMqSource][amqsource] will use will become:
 
 ```
-amq1:queue:Consumer.consumer1.VirtualTopic.test?concurrentConsumers8"
+amq1:queue:Consumer.consumer1.VirtualTopic.test?concurrentConsumers=8"
 ```
 
 Producers are [ActiveMqSink][amqsink] components and are created using a producer name. This producer must point to a [configuration][config] for example,

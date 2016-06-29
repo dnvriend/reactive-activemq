@@ -1,7 +1,7 @@
 # reactive-activemq v0.0.3
-An akka-streams __lineair-flow only__ compatible `ActiveMqSource` and `ActiveMqSink` that can consume messages from an ActiveMq `queue` and 
-produce messages to an ActiveMq `topic` leveraging backpressure aware lineair flow and ActiveMq VirtualTopics. This project is 
-very much work in progress.
+An akka-streams __lineair-flow only__ compatible [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume messages from an ActiveMq 
+_queue_ and produce messages to an ActiveMq _topic_ leveraging backpressure aware lineair flow and ActiveMq [VirtualTopic][vt]s. 
+This project is very much work in progress.
 
 This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
 
@@ -26,10 +26,10 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 - Very limited number of combinators (but enough for my use case),
 - Ony supports simple lineair flows,
 - Only supports a small number of convenience combinators:
-  - `fmap`: the map operation, but exposes only the payload, does not ack the message,
-  - `fmapAck`: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
-  - `fmapAsync`: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
-  - `runForeachAck`: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
+  - [fmap][fmap]: the map operation, but exposes only the payload, does not ack the message,
+  - [fmapAck][fmapack]: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
+  - [fmapAsync][fmapasync]: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
+  - [runForeachAck][foreachack]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
 
 ## Why use it?
 Good question! The project is very new, so only use it when you really like the akka-stream API. 
@@ -75,7 +75,7 @@ object Consumer extends App {
 ```
 
 ## Producing to a VirtualTopic
-To produce to a topic:
+To produce to a [VirtualTopic][vt]:
 
 ```scala
 import akka.Done
@@ -96,22 +96,22 @@ val f: Future[Done] = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(
 
 ## Example configuraton
 The configuration is based upon a free to use producer/consumer name, that will point to an ActiveMq connection that will be created
-by the `ActiveMqExtension` when it creates the list of connections from the `reactive-activemq.connections` config. 
+by the [ActiveMqExtension][extension] when it creates the list of connections from the `reactive-activemq.connections` config. 
 
 The connections name must be the name of the connection configuration eg. `amq1`, will point to the `amq1` configuration which must
 contain the host, port, user and password fields. 
 
-Consumers are `ActiveMqSource` components and are created using a consumer name. This consumer name must point to a configuration
-for example, `consumer1` (bad idea to use this name) and will use a connection, use a queue name (using VirtualTopic semantics) and 
-will use a number of concurrent connections. The endpointUri that the `ActiveMqSource` will use will become:
+Consumers are [ActiveMqSource][amqsource] components and are created using a consumer name. This consumer name must point to a configuration
+for example, `consumer1` (bad idea to use this name) and will use a connection, use a queue name (using [VirtualTopic][vt] semantics) and 
+will use a number of concurrent connections. The endpointUri that the [ActiveMqSource][amqsource] will use will become:
 
 ```
 amq1:queue:Consumer.consumer1.VirtualTopic.test?concurrentConsumers8"
 ```
 
-Producers are `ActiveMqSink` components and are created using a producer name. This producer must point to a configuration for example,
-`producer1` (bad idea to use this name) and will use a connection and a topic name using VirtualTopic semantics. The endpointUri that the
-`ActiveMqSink` will use will become:
+Producers are [ActiveMqSink][amqsink] components and are created using a producer name. This producer must point to a configuration for example,
+`producer1` (bad idea to use this name) and will use a connection and a topic name using [VirtualTopic][vt] semantics. The endpointUri that the
+[ActiveMqSink][amqsink] will use will become:
 
 ```
 amq1:topic:VirtualTopic.test"
@@ -158,39 +158,53 @@ producer1 {
 ## Architecture
 The plugin is designed around the following choices:
 - Each queue will contain only one message type, we will call this type `T`,
-- Consumers will consume from a queue using VirtualTopic semantics: `activemq:queue:Consumer.ConsumerName.VirtualTopic.TopicName?concurrentConsumers=1`,
-- Consumers will be called `ActiveMqSource`,
-- Consumers need a `MessageExtractor`typeclass to extract messages to type `T`
-- Producers will produce to a topic using VirtualTopic semantics: `activemq:topic:VirtualTopic.TopicName`,
-- Producers will be called `ActiveMqSink`,
+- Consumers will consume from a queue using [VirtualTopic][vt] semantics: `activemq:queue:Consumer.ConsumerName.VirtualTopic.TopicName?concurrentConsumers=1`,
+- Consumers will be called [ActiveMqSource][amqsource],
+- Consumers need a [MessageExtractor][extractor]typeclass to extract messages to type `T`
+- Producers will produce to a topic using [VirtualTopic][vt] semantics: `activemq:topic:VirtualTopic.TopicName`,
+- Producers will be called [ActiveMqSink][amqsink],
 - Procuers need a `MessageBuilder` to create messages to send to a topic,
 - Consumers and producers have names that refer to a configured component using Typesafe Config,
-- Messages will be consumed using an `ActiveMqSource("consumerName")` and needs an implicit `MessageExtractor`,
+- Messages will be consumed using an `ActiveMqSource("consumerName")` and needs an implicit [MessageExtractor][extractor],
 - Messages will be produced using an `ActiveMqSink("producerName")` and needs an implicit `MessageBuilder`,
 
 ## Removing messages from ActiveMq
 A message will be removed from the broker when:
-- A message cannot be extracted/unmarshalled by the `ActiveMqSource` ie. the `MessageExtractor` throws an exception,
-- The `fmapAck`, `fmapAsync` combinator is used and the operation succeeds,
-- The `runForeachAck` operations runs the stream and the enclosed foreach operation succeeds, 
+- A message cannot be extracted/unmarshalled by the [ActiveMqSource][amqsource] ie. the [MessageExtractor][extractor] throws an exception,
+- The [fmapAck][fmapack], [fmapAsync][fmapasync] combinator is used and the operation succeeds,
+- The [runForeachAck][runforeach] operations runs the stream and the enclosed foreach operation succeeds, 
 - Any of the normal combinators are used and the function has completed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
 - Basically when the promise has been completed with a success somewhere in the stream,
 
 ## Leaving messages on ActiveMq
 A message will be left on the broker when:
 - When the `akka.camel.consumer.reply-timeout = 1m` has been triggered,
-- The `fmapAck`, `fmapAsync` combinator is used and the operation fails,
-- The `runForeachAck` operations runs the stream and the enclosed foreach operation fails, 
+- The [fmapAck][fmapack], [fmapAsync][fmapasync] combinator is used and the operation fails,
+- The [runForeachAck][runforeach] operations runs the stream and the enclosed foreach operation fails, 
 - Any of the normal combinators are used and the function has failed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
 - Basically when the promise has been completed with a failure somewhere in the stream,
 
-## Extracting Messages
+## Consuming/Receiving and Extracting Messages
+The [ActiveMqSource][amqsource] needs an implicit [MessageExtractor][extractor] to convert a [CamelMessage][msg] to a `T`.
+ 
 - To extract the message, the typeclass pattern will be used which is a `MessageExtractor[IN, OUT]`,
-- `IN` will be defined as a `CamelMessage`
-- `OUT` will be defined as a `MessageContext[T, Map[String, Any]]`
-- MessageExtractor is therefor defined as: `MessageExtractor[CamelMessage, MessageContext[T, Map[String, Any]]]`
-- The MessageExtractor is responsible for extracting the type T *and* extracting any relevant headers
-- Having the MessageExtractor pluggable decouples the serialization method 
+- `IN` will be defined as a [CamelMessage][msg],
+- `OUT` will be defined as a `T`,
+- [MessageExtractor][extractor] is therefor defined as: `MessageExtractor[CamelMessage, T]`,
+- The MessageExtractor is responsible for extracting the type T *and* extracting any relevant headers,
+- Having the MessageExtractor pluggable decouples the unmarshalling method.
+ 
+## Producing/Sending and Creating Messages
+The [ActiveMqSink][amqsink] needs an implicit [MessageBuilder][builder] to convert a `T` into a [CamelMessage][msg] that will be used to send
+a message to a [VirtualTopic][vt]. 
+
+- To build a message, the typeclass pattern will be used which is a `MessageBuilder[IN, CamelMessage]`,
+- `IN` will be defined as a `T` which will be whatever element is flowing though the stream,
+- `OUT` will be defined as a [CamelMessage][msg],
+- [MessageBuilder][builder] is therefor defined as: `MessageBuilder[T, CamelMessage]`,
+- The MessageBuilder is responsible for building the CamelMessage and setting any relevant headers thus all information must be 
+  available in `T`, the flowing element, any static information can be injected from global scope,
+- Having the MessageBuilder pluggable decouples the marshalling method.
  
 # Acknowledgement in streams
 Akka streams only handles backpressure, *not* acknowledgements. Inspired by opt-rabbit, I have tried using the same approach
@@ -237,3 +251,14 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [need-for-ack]: http://tim.theenchanter.com/2015/07/the-need-for-acknowledgement-in-streams.html
 [op-rabbit]: https://github.com/SpinGo/op-rabbit
 [spingo]: https://www.spingo.com/
+[extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/extension/ActiveMqExtension.scala
+[builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageBuilder.scala
+[extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageExtractor.scala
+[amqsource]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/ActiveMqSource.scala
+[amqsink]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/ActiveMqSink.scala
+[fmap]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L40
+[fmapack]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L27
+[fmapasync]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L44
+[runforeach]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L55
+[msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala
+[vt]: http://activemq.apache.org/virtual-destinations.html

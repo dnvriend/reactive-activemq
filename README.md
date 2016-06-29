@@ -147,6 +147,16 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 - [The Need for Acknowledgement in Streams][need-for-ack]
 - [op-rabbit][op-rabbit]
 
+# Whats new?
+- v0.0.3 (2016-06-29)
+  - To initialize connections, a list of connections is added to `reactive-activemq` settings which will be
+    initialized as soon as possible as they will be created by the ActiveMqExtension,
+  - Each consumer/producer has its own (free to choose) name and is read from configuration.
+- v0.0.2 (2016-06-28)
+  - Cleanup some of the code.
+- v0.0.1 (2016-06-28)
+  - Initial release.
+
 [need-for-ack]: http://tim.theenchanter.com/2015/07/the-need-for-acknowledgement-in-streams.html
 [op-rabbit]: https://github.com/SpinGo/op-rabbit
 [spingo]: https://www.spingo.com/

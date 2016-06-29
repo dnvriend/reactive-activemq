@@ -94,6 +94,67 @@ sys.addShutdownHook(system.terminate())
 val f: Future[Done] = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(nr ⇒ List.fill(10)(nr)).runWith(ActiveMqSink("producer1"))
 ```
 
+## Example configuraton
+The configuration is based upon a free to use producer/consumer name, that will point to an ActiveMq connection that will be created
+by the `ActiveMqExtension` when it creates the list of connections from the `reactive-activemq.connections` config. 
+
+The connections name must be the name of the connection configuration eg. `amq1`, will point to the `amq1` configuration which must
+contain the host, port, user and password fields. 
+
+Consumers are `ActiveMqSource` components and are created using a consumer name. This consumer name must point to a configuration
+for example, `consumer1` (bad idea to use this name) and will use a connection, use a queue name (using VirtualTopic semantics) and 
+will use a number of concurrent connections. The endpointUri that the `ActiveMqSource` will use will become:
+
+```
+amq1:queue:Consumer.consumer1.VirtualTopic.test?concurrentConsumers8"
+```
+
+Producers are `ActiveMqSink` components and are created using a producer name. This producer must point to a configuration for example,
+`producer1` (bad idea to use this name) and will use a connection and a topic name using VirtualTopic semantics. The endpointUri that the
+`ActiveMqSink` will use will become:
+
+```
+amq1:topic:VirtualTopic.test"
+```
+
+Example config:
+```
+reactive-activemq {
+  connections = ["amq1", "amq2"]
+}
+
+amq1 {
+  host = "boot2docker"
+  port = "61616"
+  user = "amq"
+  pass = "amq"
+}
+
+amq2 {
+  host = "boot2docker"
+  port = "61616"
+  user = "amq"
+  pass = "amq"
+}
+
+consumer1 {
+  conn = "amq1"
+  queue = "test"
+  concurrentConsumers = "8"
+}
+
+consumer2 {
+  conn = "amq2"
+  queue = "test"
+  concurrentConsumers = "8"
+}
+
+producer1 {
+  conn = "amq2"
+  topic = "test"
+}
+```
+
 ## Architecture
 The plugin is designed around the following choices:
 - Each queue will contain only one message type, we will call this type `T`,

@@ -1,7 +1,8 @@
 # reactive-activemq v0.0.3
-An [akka-streams][akka-streams] [linear flow only][linear] compatible [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume messages 
-from an [ActiveMq][amq] _queue_ and produce messages to an [ActiveMq][amq] _topic_ leveraging backpressure 
-aware [linear flow][linear] and ActiveMq [VirtualTopic][vt]s. This project is very much work in progress.
+reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
+components, the [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume and produce messages with 
+[VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
+message flow between components. This project is very much work in progress.
 
 This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
 
@@ -25,11 +26,7 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 - Implementation is very sketchy,
 - Very limited number of combinators (but enough for my use case),
 - Ony supports simple [linear flows][linear],
-- Only supports a small number of convenience combinators:
-  - [fmap][fmap]: the map operation, but exposes only the payload, does not ack the message,
-  - [fmapAck][fmapack]: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
-  - [fmapAsync][fmapasync]: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
-  - [runForeachAck][runforeach]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
+- Only supports a small number of convenience combinators on the [ActiveMqSource][amqsource].
 
 ## Why use it?
 Good question! The project is very new, so only use it when you really like the [akka-streams][akka-streams] API. 
@@ -42,6 +39,16 @@ simple [linear flow][linear] using [akka-streams][akka-streams]!
 - Better implementation ??,
 - More combinators?? I only need fmap and fmapAsync, filters, collect etc only introduce more problems ie. removing filtered messages from the broker,
 - Custom Source/Sink so that the standard non-acking stages cannot be used ?? just like [op-rabbit][op-rabbit],
+
+## ActiveMqSource
+[ActiveMqSource][amqsource] support the following convenience combinators:
+- [fmap][fmap]: the map operation, but exposes only the payload, does not ack the message,
+- [fmapAck][fmapack]: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
+- [fmapAsync][fmapasync]: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
+- [runForeachAck][runforeach]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, [materializes][mat] the stream to a `Future[Done]`. 
+
+## ActiveMqSink
+[ActiveMqSink] should be able to be used on any graph
 
 ## Consuming from a queue
 To consume from a queue: 
@@ -275,4 +282,6 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [akka-persistence]: http://doc.akka.io/docs/akka/current/scala/persistence.html
 [akka-persistence-query]: http://doc.akka.io/docs/akka/current/scala/persistence-query.html
 [linear]: http://doc.akka.io/docs/akka/current/scala/stream/stream-flows-and-basics.html#Defining_and_running_streams
+[mat]: http://doc.akka.io/docs/akka/current/scala/stream/stream-composition.html#materialized-values
+[demand]: http://doc.akka.io/docs/akka/current/scala/stream/stream-flows-and-basics.html#Back-pressure_explained
 [typesafe-config]: https://github.com/typesafehub/config

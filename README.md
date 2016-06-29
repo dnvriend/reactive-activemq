@@ -1,4 +1,4 @@
-# reactive-activemq v0.0.2
+# reactive-activemq v0.0.3
 An akka-streams __lineair-flow only__ compatible `ActiveMqSource` and `ActiveMqSink` that can consume messages from an ActiveMq `queue` and 
 produce messages to an ActiveMq `topic` leveraging backpressure aware lineair flow and ActiveMq VirtualTopics. This project is 
 very much work in progress.
@@ -17,7 +17,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.2"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 ```
 
 ## Limitations

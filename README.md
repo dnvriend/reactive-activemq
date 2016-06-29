@@ -35,7 +35,7 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 Good question! The project is very new, so only use it when you really like the [akka-streams][akka-streams] API. 
 I use it to combine consuming messages from [ActiveMq][amq] with [akka-persistence][akka-persistence] and/or 
 [akka-persistence-query][akka-persistence-query] API to [ActiveMq][amq], because nothing beats reading a 
-simple [linear flow] using [akka-streams][akka-streams]!
+simple [linear flow][linear] using [akka-streams][akka-streams]!
 
 ## Todo:
 - Testing,
@@ -96,13 +96,14 @@ val f: Future[Done] = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(
 ```
 
 ## Example configuraton
-The configuration is based upon a free to use producer/consumer name, that will point to an ActiveMq connection that will be created
-by the [ActiveMqExtension][extension] when it creates the list of connections from the `reactive-activemq.connections` config. 
+The [configuration][config] is based upon a free to use producer/consumer name, that will point to an [ActiveMq][amq] connection that 
+will be created by the [ActiveMqExtension][extension] when it creates the list of connections from the `reactive-activemq.connections` 
+config. 
 
 The connections name must be the name of the connection configuration eg. `amq1`, will point to the `amq1` configuration which must
 contain the host, port, user and password fields. 
 
-Consumers are [ActiveMqSource][amqsource] components and are created using a consumer name. This consumer name must point to a configuration
+Consumers are [ActiveMqSource][amqsource] components and are created using a consumer name. This consumer name must point to a [configuration][config]
 for example, `consumer1` (bad idea to use this name) and will use a connection, use a queue name (using [VirtualTopic][vt] semantics) and 
 will use a number of concurrent connections. The endpointUri that the [ActiveMqSource][amqsource] will use will become:
 
@@ -110,7 +111,7 @@ will use a number of concurrent connections. The endpointUri that the [ActiveMqS
 amq1:queue:Consumer.consumer1.VirtualTopic.test?concurrentConsumers8"
 ```
 
-Producers are [ActiveMqSink][amqsink] components and are created using a producer name. This producer must point to a configuration for example,
+Producers are [ActiveMqSink][amqsink] components and are created using a producer name. This producer must point to a [configuration][config] for example,
 `producer1` (bad idea to use this name) and will use a connection and a topic name using [VirtualTopic][vt] semantics. The endpointUri that the
 [ActiveMqSink][amqsink] will use will become:
 
@@ -118,7 +119,7 @@ Producers are [ActiveMqSink][amqsink] components and are created using a produce
 amq1:topic:VirtualTopic.test"
 ```
 
-Example config:
+Example [configuration][config]:
 ```
 reactive-activemq {
   connections = ["amq1", "amq2"]
@@ -165,7 +166,7 @@ The plugin is designed around the following choices:
 - Producers will produce to a topic using [VirtualTopic][vt] semantics: `activemq:topic:VirtualTopic.TopicName`,
 - Producers will be called [ActiveMqSink][amqsink],
 - Procuers need a `MessageBuilder` to create messages to send to a topic,
-- Consumers and producers have names that refer to a configured component using Typesafe Config,
+- Consumers and producers have names that refer to a [configured][config] component using [Typesafe Config][typesafe-config],
 - Messages will be consumed using an `ActiveMqSource("consumerName")` and needs an implicit [MessageExtractor][extractor],
 - Messages will be produced using an `ActiveMqSink("producerName")` and needs an implicit `MessageBuilder`,
 
@@ -241,9 +242,9 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 
 # Whats new?
 - v0.0.3 (2016-06-29)
-  - To initialize connections, a list of connections is added to `reactive-activemq` settings which will be
-    initialized as soon as possible as they will be created by the ActiveMqExtension,
-  - Each consumer/producer has its own (free to choose) name and is read from configuration.
+  - To initialize connections, a list of connections is added to `reactive-activemq` [config][config] which will be
+    initialized as soon as possible as they will be created by the [ActiveMqExtension][extension],
+  - Each consumer/producer has its own (free to choose) name and is read from [configuration][config].
 - v0.0.2 (2016-06-28)
   - Cleanup some of the code.
 - v0.0.1 (2016-06-28)
@@ -252,6 +253,7 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [need-for-ack]: http://tim.theenchanter.com/2015/07/the-need-for-acknowledgement-in-streams.html
 [op-rabbit]: https://github.com/SpinGo/op-rabbit
 [spingo]: https://www.spingo.com/
+[config]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/resources/reference.conf
 [extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/extension/ActiveMqExtension.scala
 [builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageBuilder.scala
 [extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageExtractor.scala
@@ -268,3 +270,4 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [akka-persistence]: http://doc.akka.io/docs/akka/current/scala/persistence.html
 [akka-persistence-query]: http://doc.akka.io/docs/akka/current/scala/persistence-query.html
 [linear]: http://doc.akka.io/docs/akka/current/scala/stream/stream-flows-and-basics.html#Defining_and_running_streams
+[typesafe-config]: https://github.com/typesafehub/config

@@ -1,7 +1,7 @@
 # reactive-activemq v0.0.3
-An akka-streams __lineair-flow only__ compatible [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume messages from an ActiveMq 
-_queue_ and produce messages to an ActiveMq _topic_ leveraging backpressure aware lineair flow and ActiveMq [VirtualTopic][vt]s. 
-This project is very much work in progress.
+An [akka-streams][akka-streams] [linear flow only][linear] compatible [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume messages 
+from an [ActiveMq][amq] _queue_ and produce messages to an [ActiveMq][amq] _topic_ leveraging backpressure 
+aware [linear flow][linear] and ActiveMq [VirtualTopic][vt]s. This project is very much work in progress.
 
 This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
 
@@ -24,17 +24,18 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
 - It is very new,
 - Implementation is very sketchy,
 - Very limited number of combinators (but enough for my use case),
-- Ony supports simple lineair flows,
+- Ony supports simple [linear flows][linear],
 - Only supports a small number of convenience combinators:
   - [fmap][fmap]: the map operation, but exposes only the payload, does not ack the message,
   - [fmapAck][fmapack]: the map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
   - [fmapAsync][fmapasync]: the async map operation, but exposes only the payload, it acks or fails the message depending on the result of the `A => B` function,
-  - [runForeachAck][foreachack]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
+  - [runForeachAck][runforeach]: the runForeach operation, it acks or fails the message depending on the result of the `A => Unit` function, 
 
 ## Why use it?
-Good question! The project is very new, so only use it when you really like the akka-stream API. 
-I use it to combine consuming messages from ActiveMq with akka-persistence and/or the akka-persistence-query API to ActiveMq,
-and nothing beats reading a simple lineair flow using akka-stream!
+Good question! The project is very new, so only use it when you really like the [akka-streams][akka-streams] API. 
+I use it to combine consuming messages from [ActiveMq][amq] with [akka-persistence][akka-persistence] and/or 
+[akka-persistence-query][akka-persistence-query] API to [ActiveMq][amq], because nothing beats reading a 
+simple [linear flow] using [akka-streams][akka-streams]!
 
 ## Todo:
 - Testing,
@@ -262,3 +263,8 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [runforeach]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L55
 [msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala
 [vt]: http://activemq.apache.org/virtual-destinations.html
+[amq]: http://activemq.apache.org/
+[akka-streams]: http://doc.akka.io/docs/akka/current/scala/stream/index.html
+[akka-persistence]: http://doc.akka.io/docs/akka/current/scala/persistence.html
+[akka-persistence-query]: http://doc.akka.io/docs/akka/current/scala/persistence-query.html
+[linear]: http://doc.akka.io/docs/akka/current/scala/stream/stream-flows-and-basics.html#Defining_and_running_streams

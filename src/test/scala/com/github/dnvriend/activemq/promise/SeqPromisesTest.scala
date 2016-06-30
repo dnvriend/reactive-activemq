@@ -32,9 +32,9 @@ class SeqPromisesTest extends TestSpec {
   }
 
   def withPromises()(f: Seq[(Promise[Unit], Future[Unit])] ⇒ Unit): Unit = f(Seq(
-    withPromise((_: Try[Unit]) ⇒ println(1), PartialFunction.empty),
-    withPromise((_: Try[Unit]) ⇒ println(2), PartialFunction.empty),
-    withPromise((_: Try[Unit]) ⇒ println(3), PartialFunction.empty)
+    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty),
+    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty),
+    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty)
   ))
 
   it should "complete a promise" in withPromises() { xs ⇒

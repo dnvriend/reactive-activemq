@@ -10,11 +10,11 @@
         </encoder>
     </appender>
 
-    <logger name="com.github.dnvriend" level="debug"/>
+    <!--<logger name="com.github.dnvriend" level="debug"/>-->
     <!--<logger name="org.apache.activemq" level="debug"/>-->
     <!--<logger name="org.apache.camel" level="debug"/>-->
 
-    <root level="info">
+    <root level="warn">
         <appender-ref ref="console"/>
     </root>
 </configuration>

@@ -16,21 +16,23 @@
 
 package com.github.dnvriend.activemq.stream
 
-import akka.camel.CamelMessage
-import akka.stream.scaladsl.Sink
 import com.github.dnvriend.activemq.TestSpec
-import com.github.dnvriend.activemq.stream.AckedFlowOps._
 
-import scala.concurrent.duration._
-
-case class Foo()
+import scala.concurrent.Promise
 
 class ActiveMqSourceTest extends TestSpec {
-  implicit val FooExtractor = new MessageExtractor[CamelMessage, Foo] {
-    override def extract(in: CamelMessage): Foo = Foo()
-  }
+  it should "consume messages from the queue" in {
+    withTestTopicSubscriber() { sub ⇒
+      withTestTopicPublisher() { pub ⇒
+        pub.sendNext(testPerson)
+        pub.sendComplete()
 
-  it should "consume messages from queue" in {
-    ActiveMqSource("consumer1").runForeachAck(println).futureValue
+        sub.request(1)
+        sub.expectNextPF {
+          case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+        }
+        sub.cancel()
+      }
+    }
   }
 }

@@ -24,6 +24,7 @@ import akka.persistence.{ PersistentActor, RecoveryCompleted, SnapshotOffer }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
+import com.github.dnvriend.activemq.stream.ResumableProjection.JournalQueries
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -57,6 +58,12 @@ class ResumableProjection(projectionName: String, readJournalId: String)(implici
       }
   }
 
+  /**
+   * Will be called right after the recovery has been completed. The outcome is the latestOffset
+   * that can be used to create a Query
+   * @param latestOffset
+   * @param journal
+   */
   def queryWithOffset(latestOffset: Long, journal: JournalQueries): Unit = ()
 
   def handleMessage(offset: Long, persistenceId: String, sequenceNr: Long, event: Any): Unit = ()
@@ -65,3 +72,16 @@ class ResumableProjection(projectionName: String, readJournalId: String)(implici
     def run: Future[Done] = src.runForeach(self ! _)
   }
 }
+
+//object Foo extends App {
+//
+//  new ResumableProjection("table1", "jdbc-read-journal-voor-table-Messages") {
+//    override def queryWithOffset(latestOffset: Long, journal: JournalQueries): Unit = {
+//      journal.eventsByTag("tag1", latestOffset).run
+//    }
+//
+//    override def handleMessage(offset: Long, persistenceId: String, sequenceNr: Long, event: Any): Unit = {
+//      // do your synchronous stuff here
+//    }
+//  }
+//}

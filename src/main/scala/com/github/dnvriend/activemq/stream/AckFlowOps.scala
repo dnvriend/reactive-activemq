@@ -22,7 +22,7 @@ import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-object AckedFlowOps {
+object AckFlowOps {
   implicit class SourceOps[A, B](src: Source[AckTup[A], NotUsed]) {
     def fmapAck(f: A ⇒ B): Source[AckTup[B], NotUsed] = src.map {
       case (p, a) ⇒

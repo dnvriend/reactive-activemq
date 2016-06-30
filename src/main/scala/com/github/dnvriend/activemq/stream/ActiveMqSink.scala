@@ -38,3 +38,18 @@ object ActiveMqSink {
     }.toMat(Sink.ignore)(Keep.right)
   }
 }
+
+object AckActiveMqSink {
+  import scala.collection.JavaConversions._
+  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] = {
+    val template = CamelExtension(system).template
+    Flow[AckTup[A]].mapAsync(qos) {
+      case (p, payload) ⇒
+        Future {
+          val camelMessage = builder.build(payload)
+          val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
+          template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
+        }.map(_ ⇒ p.success(())).recover { case cause: Throwable ⇒ p.failure(cause) }
+    }.toMat(Sink.ignore)(Keep.right)
+  }
+}

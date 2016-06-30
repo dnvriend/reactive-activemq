@@ -16,16 +16,44 @@
 
 package com.github.dnvriend.activemq.stream
 
-import akka.stream.scaladsl.Source
 import com.github.dnvriend.activemq.TestSpec
-import spray.json.DefaultJsonProtocol._
-import JsonMessageBuilder._
 
-import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.concurrent.duration._
 
 class ActiveMqSinkTest extends TestSpec {
-  it should "send numbers to topic" in {
-    def send = Source.fromIterator(() ⇒ Iterator from 0).take(100).map(nr ⇒ List.fill(10)(nr)).runWith(ActiveMqSink("producer1"))
-    Future.sequence(List.fill(5)(send)).futureValue
+  it should "produce messages to a queue" in {
+    withTestTopicSubscriber() { sub ⇒
+      withTestTopicPublisher() { pub ⇒
+        pub.sendNext(testPerson)
+        pub.sendComplete()
+
+        sub.request(1)
+        sub.expectNextPF {
+          case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+        }
+
+        sub.expectNoMsg(500.millis)
+        sub.cancel()
+      }
+    }
+  }
+
+  it should "produce multiple messages to a queue" in {
+    withTestTopicSubscriber() { sub ⇒
+      withTestTopicPublisher() { pub ⇒
+
+        (0 to 10).foreach { _ ⇒
+          pub.sendNext(testPerson)
+          sub.request(1)
+          sub.expectNextPF {
+            case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+          }
+        }
+
+        pub.sendComplete()
+        sub.cancel()
+      }
+    }
   }
 }

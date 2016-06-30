@@ -163,13 +163,9 @@ producer1 {
   topic = "test"
 }
 ```
-# JournalSink
-...
+# JournalSink and AckJournalSink
+The JournalSink and AckJournalSink can be used to store messages into an [akka-persistence][akka-persistence] journal.
 
-```scala
-```
-
-# AckJournalSink
 The `com.github.dnvriend.activemq.stream.AckJournalSink` can be used to store unmarshalled messages received from
 a [reactive-activemq][reactive-activemq] `ActiveMqSource` to a journal. When creating reactive applications
 having messages in a journal is much more handy than having messages on a queue eg. multiple resumable projection or
@@ -188,13 +184,14 @@ The AckJournalSink can be configured with the following options:
 - tags: A function from A => Set[String], makes it possible to match on `A` and tag the message in the journal with a number
   of tokens. This is useful for resumable projects that will use these tags to eg. build views.
 
-Example:
 ```scala
 import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
 import akka.stream.{ ActorMaterializer, Materializer }
 import scala.concurrent.ExecutionContext
 import com.github.dnvriend.activemq.stream.{ AckJournalSink, ActiveMqSource, MessageExtractor }
+import akka.stream.scaladsl.{ Merge, Source }
+import com.github.dnvriend.activemq.stream.{ AckJournalSink, ActiveMqSource, JournalSink, MessageExtractor }
 
 implicit val system: ActorSystem = ActorSystem("importer-draw-result")
 implicit val log: LoggingAdapter = Logging(system, this.getClass)
@@ -203,18 +200,54 @@ implicit val ec: ExecutionContext = system.dispatcher
 sys.addShutdownHook(system.terminate())
 
 final case class MessageOne(id: String)
+final case class MessageTwo(id: String)
+final case class MessageThree(id: String)
 
 implicit val MessageOneMesageExtractor = new MessageExtractor[CamelMessage, MessageOne] {
-    override def extract(in: CamelMessage): MessageOne = {
-      MessageOne("foo")
-    }
+override def extract(in: CamelMessage): MessageOne = {
+  MessageOne(in.body.asInstanceOf[String])
+}
 }
 
-def tags(msg: MessageOne): Set[String] = msg match {
-  case MessageOne(id) ⇒ Set(msg.getClass.getSimpleName)
+implicit val MessageTwoMesageExtractor = new MessageExtractor[CamelMessage, MessageTwo] {
+override def extract(in: CamelMessage): MessageTwo = {
+  MessageTwo(in.body.asInstanceOf[String])
+}
 }
 
-ActiveMqSource("queue1").runWith(AckJournalSink[MessageOne]("MessageReceivedJournal", tags))
+implicit val MessageThreeMesageExtractor = new MessageExtractor[CamelMessage, MessageThree] {
+override def extract(in: CamelMessage): MessageThree = {
+  MessageThree(in.body.asInstanceOf[String])
+}
+}
+}
+
+class Consumer(implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext, log: LoggingAdapter) {
+import Consumer._
+import scala.concurrent.duration._
+
+val amq1 = ActiveMqSource[MessageOne]("queue1")
+val amq2 = ActiveMqSource[MessageTwo]("queue2")
+val amq3 = ActiveMqSource[MessageThree]("queue3")
+Source.combine(amq1, amq2, amq3)(ports ⇒ Merge(ports)).runWith(AckJournalSink("MessagesJournal", tags = {
+case msg ⇒ Set(msg.getClass().getSimpleName)
+}))
+
+val t1 = Source.tick(0.seconds, 1.second, "A")
+val t2 = Source.tick(0.seconds, 5.second, "B")
+val t3 = Source.tick(0.seconds, 10.second, "C")
+val t4 = Source.tick(0.seconds, 10.second, "D")
+Source.combine(t1, t2, t3, t4)(ports ⇒ Merge(ports)).runWith(JournalSink("TickerMessages", tags = {
+case "D"         ⇒ Set.empty
+case msg: String ⇒ Set(msg)
+}))
+
+Source.combine(
+Source.tick(0.seconds, 1.second, "Y"),
+Source.tick(0.seconds, 5.second, "Z")
+)(ports ⇒ Merge(ports))
+.runWith(JournalSink("TickerWithoutTags"))
+
 ```
 
 # Architecture
@@ -308,7 +341,7 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 # Whats new?
 - v0.0.4 (2016-06-30)
   - Added two new components, the `AckJournalSink` and the `JournalSink`.
-  
+
 - v0.0.3 (2016-06-29)
   - To initialize connections, a list of connections is added to `reactive-activemq` [config][config] which will be
     initialized as soon as possible as they will be created by the [ActiveMqExtension][extension],

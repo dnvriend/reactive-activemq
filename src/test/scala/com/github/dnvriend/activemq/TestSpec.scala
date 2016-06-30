@@ -36,7 +36,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 
-object TestSpec extends DefaultJsonProtocol {
+object PersonDomain extends DefaultJsonProtocol {
   final case class Address(street: String, houseNumber: String, zipCode: String)
   final case class Person(firstName: String, lastName: String, age: Int, address: Address)
 
@@ -45,7 +45,7 @@ object TestSpec extends DefaultJsonProtocol {
 }
 
 trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResources with BeforeAndAfterEach with BeforeAndAfterAll with OptionValues with Eventually {
-  import TestSpec._
+  import PersonDomain._
   implicit val system: ActorSystem = ActorSystem()
   implicit val mat: Materializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
@@ -77,13 +77,11 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
     eventuallyMessageIsConsumed(topic)
   }
 
-  def withTestTopicPublisher()(f: TestPublisher.Probe[Person] ⇒ Unit): Unit = {
+  def withTestTopicPublisher()(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqSink[Person]("PersonProducer")).run())
-  }
 
-  def withTestTopicSubscriber()(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit = {
+  def withTestTopicSubscriber()(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
     f(ActiveMqSource[Person]("PersonConsumer").runWith(TestSink.probe[AckTup[Person]](system)))
-  }
 
   def randomId = UUID.randomUUID.toString
 

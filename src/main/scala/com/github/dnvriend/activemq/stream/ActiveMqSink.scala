@@ -49,7 +49,7 @@ object AckActiveMqSink {
           val camelMessage = builder.build(payload)
           val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
           template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
-        }.map(_ ⇒ p.success(())).recover { case cause: Throwable ⇒ p.failure(cause) }
+        }.map { _ ⇒ if (!p.isCompleted) p.success(()) }.recover { case cause: Throwable ⇒ if (!p.isCompleted) p.failure(cause) }
     }.toMat(Sink.ignore)(Keep.right)
   }
 }

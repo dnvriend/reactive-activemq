@@ -31,36 +31,38 @@ class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String
 
   override def receiveRecover: Receive = PartialFunction.empty
 
-  var previousMessage: AckTup[A] = _
+  private var previousMessage: AckTup[A] = _
+  private def promise = previousMessage._1
+  private def payload = previousMessage._2
 
   override def receiveCommand: Receive = LoggingReceive {
     case OnNext(msg) ⇒
       previousMessage = msg.asInstanceOf[AckTup[A]]
-      val evaluatedTags = tags(previousMessage._2)
-      val msgToPersist = if (evaluatedTags.isEmpty) previousMessage._2 else Tagged(previousMessage._2, evaluatedTags)
+      val evaluatedTags = tags(payload)
+      val msgToPersist = if (evaluatedTags.isEmpty) payload else Tagged(payload, evaluatedTags)
       persist(msgToPersist) { _ ⇒
-        previousMessage._1.success(())
+        if (!promise.isCompleted) promise.success(())
         request(1)
       }
     case OnComplete ⇒
       log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      previousMessage._1.success(())
+      if (!promise.isCompleted) promise.success(())
       context.stop(self)
 
     case OnError(cause) ⇒
       log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      previousMessage._1.failure(cause)
+      if (!promise.isCompleted) promise.failure(cause)
       context.stop(self)
   }
 
   override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
     log.error(cause, "AckJournalSync, persist failure for event: {} and sequenceNr: {}", event, seqNr)
-    previousMessage._1.failure(cause)
+    if (!promise.isCompleted) promise.failure(cause)
   }
 
   override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
     log.error(cause, "AckJournalSync, persist rejected for event: {} and sequenceNr: {}", event, seqNr)
-    previousMessage._1.failure(cause)
+    if (!promise.isCompleted) promise.failure(cause)
   }
 }
 

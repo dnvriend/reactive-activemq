@@ -16,14 +16,15 @@
 
 package com.github.dnvriend.activemq.stream
 
-import akka.{ Done, NotUsed }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import akka.{ Done, NotUsed }
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 object AckFlowOps {
   implicit class SourceOps[A, B](src: Source[AckTup[A], NotUsed]) {
+
     def fmapAck(f: A ⇒ B): Source[AckTup[B], NotUsed] = src.map {
       case (p, a) ⇒
         try {
@@ -52,18 +53,6 @@ object AckFlowOps {
       }
     }
 
-    def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(foreachAck(f))
-
-    def foreachAck(f: A ⇒ Unit): Sink[AckTup[A], Future[Done]] =
-      Flow[AckTup[A]].map {
-        case (p, a) ⇒
-          try {
-            f(a)
-            if (!p.isCompleted) p.success(())
-          } catch {
-            case cause: Throwable ⇒
-              if (!p.isCompleted) p.failure(cause)
-          }
-      }.toMat(Sink.ignore)(Keep.right).named("foreachSink")
+    def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreachAck(f))
   }
 }

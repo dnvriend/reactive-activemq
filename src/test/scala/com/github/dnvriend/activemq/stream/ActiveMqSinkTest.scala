@@ -16,7 +16,8 @@
 
 package com.github.dnvriend.activemq.stream
 
-import com.github.dnvriend.activemq.TestSpec
+import akka.stream.scaladsl.Source
+import com.github.dnvriend.activemq.{ PersonDomain, TestSpec }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -55,5 +56,17 @@ class ActiveMqSinkTest extends TestSpec {
         sub.cancel()
       }
     }
+  }
+
+  it should "send 250 messages to the queue" in {
+    import PersonDomain._
+    import JsonMessageBuilder._
+    import JsonMessageExtractor._
+    val numberOfPersons = 250
+    Source.repeat(testPerson).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
+    val xs = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.ackSeq).futureValue
+    xs should not be 'empty
+    xs.size shouldBe numberOfPersons
+    xs.foreach { _ shouldBe `testPerson` }
   }
 }

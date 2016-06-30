@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.3"
+version := "0.0.4-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
@@ -26,13 +26,21 @@ resolvers += Resolver.jcenterRepo
 
 libraryDependencies ++= {
   val akkaVersion = "2.4.7"
-  val activeMqVersion = "5.9.1"
+  val activeMqVersion = "5.13.3"
+  val scalazVersion = "7.2.4"
+  val inMemoryVersion = "1.3.0"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
+    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
+    "com.typesafe.akka" %% "akka-persistence-query-experimental" % akkaVersion,
     "org.apache.activemq" % "activemq-camel" % activeMqVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
+    "org.scalaz" %% "scalaz-core" % scalazVersion,
+    "com.github.dnvriend" %% "akka-persistence-inmemory" % inMemoryVersion % Test,
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,
     "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,

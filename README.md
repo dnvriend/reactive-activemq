@@ -37,6 +37,8 @@ simple [linear flow][linear] using [akka-streams][akka-streams]!
 - ?? More combinators ??
 - ?? Custom Source/Sink so that the standard non-acking stages cannot be used ?? just like [op-rabbit][op-rabbit],
 
+# List of components
+
 ## ActiveMqSource
 [ActiveMqSource][amqsource] support the following convenience combinators:
 - [fmap][fmap]: the map operation, but exposes only the payload, does not ack the message,
@@ -161,8 +163,61 @@ producer1 {
   topic = "test"
 }
 ```
+# JournalSink
+...
 
-## Architecture
+```scala
+```
+
+# AckJournalSink
+The `com.github.dnvriend.activemq.stream.AckJournalSink` can be used to store unmarshalled messages received from
+a [reactive-activemq][reactive-activemq] `ActiveMqSource` to a journal. When creating reactive applications
+having messages in a journal is much more handy than having messages on a queue eg. multiple resumable projection or
+resumable queries that can restart from any offset in a journal, but restarting from a queue is very difficult and most
+of the time impossible.
+
+The AckJournalSink receives the AckTup[A] that [reactive-activemq][reactive-activemq] uses to ack messages from the queue
+when the message has been successfully stored in the journal, or fails the message when the message could not be stored
+or serialized to the journal, effectively leaving the message on ActiveMq.
+
+The AckJournalSink can be configured with the following options:
+- journalName: the journalName is an alias for the persistenceId. The underlying engine of the AckJournalSink is a
+  `PersistentActor` with `ActorSubscriber` which makes it backpressure aware and journal aware.
+- journalPluginId: the journalPluginId to use. When left empty, the default journal plugin will be used as configured in
+  `application.conf`,
+- tags: A function from A => Set[String], makes it possible to match on `A` and tag the message in the journal with a number
+  of tokens. This is useful for resumable projects that will use these tags to eg. build views.
+
+Example:
+```scala
+import akka.actor.ActorSystem
+import akka.event.{ Logging, LoggingAdapter }
+import akka.stream.{ ActorMaterializer, Materializer }
+import scala.concurrent.ExecutionContext
+import com.github.dnvriend.activemq.stream.{ AckJournalSink, ActiveMqSource, MessageExtractor }
+
+implicit val system: ActorSystem = ActorSystem("importer-draw-result")
+implicit val log: LoggingAdapter = Logging(system, this.getClass)
+implicit val mat: Materializer = ActorMaterializer()
+implicit val ec: ExecutionContext = system.dispatcher
+sys.addShutdownHook(system.terminate())
+
+final case class MessageOne(id: String)
+
+implicit val MessageOneMesageExtractor = new MessageExtractor[CamelMessage, MessageOne] {
+    override def extract(in: CamelMessage): MessageOne = {
+      MessageOne("foo")
+    }
+}
+
+def tags(msg: MessageOne): Set[String] = msg match {
+  case MessageOne(id) ⇒ Set(msg.getClass.getSimpleName)
+}
+
+ActiveMqSource("queue1").runWith(AckJournalSink[MessageOne]("MessageReceivedJournal", tags))
+```
+
+# Architecture
 The plugin is designed around the following choices:
 - Each queue will contain only one message type, we will call this type `T`,
 
@@ -218,7 +273,7 @@ A message will be left on the broker when:
 - Any of the normal combinators are used and the function has failed the enclosed promise from the `AckTup[A]` type, which is an alias for `Tuple2[Promise[Unit], A]`, 
 - Basically when the promise has been completed with a failure somewhere in the stream,
  
-## Acknowledgement in streams
+# Acknowledgement in streams
 Akka streams only handles backpressure, *not* acknowledgements. Inspired by opt-rabbit, I have tried using the same approach
 leveraging akka-streams and akka-camel, using a transactional connection with ActiveMq, acking the messages when needed and failing
 when appropiate. 
@@ -246,7 +301,7 @@ our use case however we have a need for `acknowledgement` so we need an `acknowl
 component that support this new `acknowledgement channel`. For starters, we need an `AckedSource`, and `AckedFlow` and an `AckedSink` for
 all components to be able to acknowledge messages from the `Sink` up to the `Source`.  
 
-## Resources
+# Resources
 - [The Need for Acknowledgement in Streams][need-for-ack]
 - [op-rabbit][op-rabbit]
 

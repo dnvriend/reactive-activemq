@@ -53,6 +53,6 @@ object AckFlowOps {
       }
     }
 
-    def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreachAck(f))
+    def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreach(f))
   }
 }

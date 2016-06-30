@@ -64,7 +64,7 @@ class ActiveMqSinkTest extends TestSpec {
     import JsonMessageExtractor._
     val numberOfPersons = 250
     Source.repeat(testPerson).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
-    val xs = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.ackSeq).futureValue
+    val xs = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).futureValue
     xs should not be 'empty
     xs.size shouldBe numberOfPersons
     xs.foreach { _ shouldBe `testPerson` }

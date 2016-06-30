@@ -20,6 +20,9 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
+import akka.persistence.query.PersistenceQuery
+import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
+import akka.stream.scaladsl.Sink
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
@@ -44,7 +47,7 @@ object PersonDomain extends DefaultJsonProtocol {
   implicit val jsonPersonFormat = jsonFormat4(Person)
 }
 
-trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResources with BeforeAndAfterEach with BeforeAndAfterAll with OptionValues with Eventually {
+trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResources with BeforeAndAfterEach with BeforeAndAfterAll with OptionValues with Eventually with DatabaseResources {
   import PersonDomain._
   implicit val system: ActorSystem = ActorSystem()
   implicit val mat: Materializer = ActorMaterializer()
@@ -52,6 +55,10 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
   val log: LoggingAdapter = Logging(system, this.getClass)
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
   implicit val timeout = Timeout(30.seconds)
+
+  val journal = PersistenceQuery(system)
+    .readJournalFor("jdbc-read-journal")
+    .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with EventsByPersistenceIdQuery]
 
   val testPerson = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500"))
 
@@ -85,7 +92,15 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
 
   def randomId = UUID.randomUUID.toString
 
+  def countJournal(pid: String): Future[Int] =
+    journal.currentEventsByPersistenceId(pid, 0, Long.MaxValue).runWith(Sink.seq).map(_.size)
+
   override protected def beforeEach(): Unit = {
     purgeQueues()
+    clearTables()
+  }
+
+  override protected def afterAll(): Unit = {
+    system.terminate().toTry should be a 'success
   }
 }

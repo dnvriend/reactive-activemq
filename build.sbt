@@ -24,11 +24,15 @@ scalaVersion := "2.11.8"
 
 resolvers += Resolver.jcenterRepo
 
+resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-releases/"
+
 libraryDependencies ++= {
   val akkaVersion = "2.4.7"
   val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
   val inMemoryVersion = "1.3.0"
+  val jdbcVersion = "2.5.0"
+  val slickVersion = "3.1.1"
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
@@ -38,7 +42,11 @@ libraryDependencies ++= {
     "org.apache.activemq" % "activemq-camel" % activeMqVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
-    "com.github.dnvriend" %% "akka-persistence-inmemory" % inMemoryVersion % Test,
+    "com.github.dnvriend" %% "akka-persistence-jdbc" % jdbcVersion,
+    "com.typesafe.slick" %% "slick" % slickVersion,
+    "com.typesafe.slick" %% "slick-hikaricp" % slickVersion exclude("com.zaxxer", "HikariCP-java6"),
+    "com.zaxxer" % "HikariCP" % "2.4.6",
+    "org.postgresql" % "postgresql" % "9.4.1208" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,

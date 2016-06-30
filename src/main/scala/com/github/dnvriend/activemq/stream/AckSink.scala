@@ -26,14 +26,14 @@ object AckSink {
   /**
    * A `Sink` that acks each message and keeps on collecting incoming elements until upstream terminates.
    */
-  def ackSeq[T]: Sink[AckTup[T], Future[immutable.Seq[T]]] =
+  def seq[T]: Sink[AckTup[T], Future[immutable.Seq[T]]] =
     Flow[AckTup[T]].map {
       case (p, a) ⇒
         if (!p.isCompleted) p.success(())
         a
     }.toMat(Sink.seq[T])(Keep.right)
 
-  def foreachAck[A](f: A ⇒ Unit): Sink[AckTup[A], Future[Done]] =
+  def foreach[A](f: A ⇒ Unit): Sink[AckTup[A], Future[Done]] =
     Flow[AckTup[A]].map {
       case (p, a) ⇒
         try {

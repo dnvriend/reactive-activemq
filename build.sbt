@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.4"
+version := "0.0.5-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
@@ -26,7 +26,7 @@ resolvers += Resolver.jcenterRepo
 
 libraryDependencies ++= {
   val akkaVersion = "2.4.7"
-  val activeMqVersion = "5.13.3"
+  val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
   val inMemoryVersion = "1.3.0"
   Seq(

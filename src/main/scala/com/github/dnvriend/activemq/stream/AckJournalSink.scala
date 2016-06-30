@@ -24,8 +24,6 @@ import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.scaladsl.Sink
 
-import scala.util.Try
-
 class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none // disable recovery of both events and snapshots
@@ -41,25 +39,29 @@ class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String
       val evaluatedTags = tags(previousMessage._2)
       val msgToPersist = if (evaluatedTags.isEmpty) previousMessage._2 else Tagged(previousMessage._2, evaluatedTags)
       persist(msgToPersist) { _ ⇒
-        Try(previousMessage._1.success(()))
+        previousMessage._1.success(())
         request(1)
       }
     case OnComplete ⇒
-      log.debug("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      Try(previousMessage._1.success(()))
+      log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
+      previousMessage._1.success(())
       context.stop(self)
 
     case OnError(cause) ⇒
       log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      Try(previousMessage._1.failure(cause))
+      previousMessage._1.failure(cause)
       context.stop(self)
   }
 
-  override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit =
-    Try(previousMessage._1.failure(cause))
+  override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
+    log.error(cause, "AckJournalSync, persist failure for event: {} and sequenceNr: {}", event, seqNr)
+    previousMessage._1.failure(cause)
+  }
 
-  override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit =
-    Try(previousMessage._1.failure(cause))
+  override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
+    log.error(cause, "AckJournalSync, persist rejected for event: {} and sequenceNr: {}", event, seqNr)
+    previousMessage._1.failure(cause)
+  }
 }
 
 class JournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
@@ -76,7 +78,7 @@ class JournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], 
       persist(msgToPersist)(_ ⇒ request(1))
 
     case OnComplete ⇒
-      log.debug("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
+      log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
       context.stop(self)
 
     case OnError(cause) ⇒

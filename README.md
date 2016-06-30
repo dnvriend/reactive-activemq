@@ -306,12 +306,17 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 - [op-rabbit][op-rabbit]
 
 # Whats new?
+- v0.0.4 (2016-06-30)
+  - Added two new components, the `AckJournalSink` and the `JournalSink`.
+  
 - v0.0.3 (2016-06-29)
   - To initialize connections, a list of connections is added to `reactive-activemq` [config][config] which will be
     initialized as soon as possible as they will be created by the [ActiveMqExtension][extension],
   - Each consumer/producer has its own (free to choose) name and is read from [configuration][config].
+
 - v0.0.2 (2016-06-28)
   - Cleanup some of the code.
+
 - v0.0.1 (2016-06-28)
   - Initial release.
 

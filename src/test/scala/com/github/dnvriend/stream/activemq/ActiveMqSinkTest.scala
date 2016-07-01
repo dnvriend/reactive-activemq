@@ -17,25 +17,25 @@
 package com.github.dnvriend.stream.activemq
 
 import akka.stream.scaladsl.Source
-import com.github.dnvriend.stream.camel.{ JsonMessageBuilder, JsonMessageExtractor }
-import com.github.dnvriend.stream.{ PersonDomain, TestSpec }
+import com.github.dnvriend.stream.PersonDomain._
+import com.github.dnvriend.stream.camel.JsonMessageBuilder._
+import com.github.dnvriend.stream.camel.JsonMessageExtractor._
+import com.github.dnvriend.stream.camel.{JsonMessageBuilder, JsonMessageExtractor}
+import com.github.dnvriend.stream.{PersonDomain, TestSpec}
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
-import PersonDomain._
-import JsonMessageBuilder._
-import JsonMessageExtractor._
 
 class ActiveMqSinkTest extends TestSpec {
   it should "produce messages to a queue" in {
     withTestTopicSubscriber() { sub ⇒
       withTestTopicPublisher() { pub ⇒
-        pub.sendNext(testPerson)
+        pub.sendNext(testPerson1)
         pub.sendComplete()
 
         sub.request(1)
         sub.expectNextPF {
-          case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+          case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
         }
 
         sub.expectNoMsg(500.millis)
@@ -49,10 +49,10 @@ class ActiveMqSinkTest extends TestSpec {
       withTestTopicPublisher() { pub ⇒
 
         (0 to 10).foreach { _ ⇒
-          pub.sendNext(testPerson)
+          pub.sendNext(testPerson1)
           sub.request(1)
           sub.expectNextPF {
-            case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+            case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
           }
         }
         pub.sendComplete()
@@ -62,19 +62,21 @@ class ActiveMqSinkTest extends TestSpec {
   }
 
   it should "send 250 messages to the queue" in {
-    import PersonDomain._
     import JsonMessageBuilder._
     import JsonMessageExtractor._
+    import PersonDomain._
     val numberOfPersons = 250
-    Source.repeat(testPerson).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
+    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
     val xs: Seq[Person] = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).futureValue
     xs should not be 'empty
     xs.size shouldBe numberOfPersons
-    xs.foreach { _ shouldBe `testPerson` }
+    xs.foreach {
+      _ shouldBe testPerson1
+    }
   }
 
   it should "copy messages from queue and put on topic" in {
-    Source.repeat(testPerson).take(10).runWith(ActiveMqSink("PersonProducer"))
+    Source.repeat(testPerson1).take(10).runWith(ActiveMqSink("PersonProducer"))
     eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.Person").value shouldBe 10)
     ActiveMqSource[Person]("PersonConsumer").take(10).runWith(AckActiveMqSink("PersonCopyProducer")).futureValue
     //    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.PersonCopy").value shouldBe 10)

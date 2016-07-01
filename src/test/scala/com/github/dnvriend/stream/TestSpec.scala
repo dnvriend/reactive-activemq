@@ -19,24 +19,26 @@ package com.github.dnvriend.stream
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.event.{ Logging, LoggingAdapter }
+import akka.event.{Logging, LoggingAdapter}
 import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
+import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal}
 import akka.stream.scaladsl.Sink
-import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
-import akka.stream.testkit.{ TestPublisher, TestSubscriber }
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.testkit.TestPublisher.Probe
+import akka.stream.testkit.TestSubscriber.Probe
+import akka.stream.testkit.scaladsl.{TestSink, TestSource}
+import akka.stream.testkit.{TestPublisher, TestSubscriber}
+import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import com.github.dnvriend.stream.activemq._
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
 import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import scala.xml.pull.XMLEvent
 
@@ -71,7 +73,8 @@ trait TestSpec extends FlatSpec
     .readJournalFor("jdbc-read-journal")
     .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with EventsByPersistenceIdQuery]
 
-  val testPerson = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
+  val testPerson1 = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
+  val testPerson2 = Person("Anon", "Ymous", 42, Address("Here", "1337", "12345", "InUrBase"))
 
   final val PersonsXmlFile = "xml/persons.xml"
   final val LotOfPersonsXmlFile = "xml/lot-of-persons.xml"
@@ -84,11 +87,11 @@ trait TestSpec extends FlatSpec
     def toTry: Try[T] = Try(self.futureValue)
   }
 
-  def withTestTopicPublisher()(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
-    f(TestSource.probe[Person].to(ActiveMqSink[Person]("PersonProducer")).run())
+  def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
+    f(TestSource.probe[Person].to(ActiveMqSink[Person](endpoint)).run())
 
-  def withTestTopicSubscriber()(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
-    f(ActiveMqSource[Person]("PersonConsumer").runWith(TestSink.probe[AckTup[Person]](system)))
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
+    f(ActiveMqSource[Person](endpoint).runWith(TestSink.probe[AckTup[Person]](system)))
 
   def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] ⇒ Unit): Unit =
     withInputStream(filename) { is ⇒

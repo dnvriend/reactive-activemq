@@ -24,12 +24,12 @@ class ActiveMqSourceTest extends TestSpec {
   it should "consume messages from the queue" in {
     withTestTopicSubscriber() { sub ⇒
       withTestTopicPublisher() { pub ⇒
-        pub.sendNext(testPerson)
+        pub.sendNext(testPerson1)
         pub.sendComplete()
 
         sub.request(1)
         sub.expectNextPF {
-          case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
+          case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
         }
         sub.cancel()
       }

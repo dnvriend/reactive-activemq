@@ -70,20 +70,6 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
     def toTry: Try[T] = Try(self.futureValue)
   }
 
-  def queueStatFor(topic: String): Option[QueueStat] =
-    getQueueStats.find(_.name contains topic)
-
-  def eventuallyMessageIsConsumed(topic: String): Unit = eventually {
-    val stats = queueStatFor(topic)
-    stats.value.enqueueCount equals stats.value.dequeueCount
-  }
-
-  def sendMessageEventuallyConsumedJson(json: String, topic: String): Unit = {
-    println(s"Sending to $topic':\n$json")
-    //    sendMessageJson(json, topic)
-    eventuallyMessageIsConsumed(topic)
-  }
-
   def withTestTopicPublisher()(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqSink[Person]("PersonProducer")).run())
 

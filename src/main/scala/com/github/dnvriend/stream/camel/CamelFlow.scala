@@ -16,9 +16,9 @@
 
 package com.github.dnvriend.stream.camel
 
-import akka.actor.{ActorLogging, Props}
-import akka.camel.{CamelMessage, Producer}
-import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
+import akka.actor.{ ActorLogging, Props }
+import akka.camel.{ CamelMessage, Producer }
+import akka.stream.actor.{ ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.scaladsl.Sink
 
 class CamelActorSubscriber(val endpointUri: String) extends Producer with ActorSubscriber with ActorLogging {

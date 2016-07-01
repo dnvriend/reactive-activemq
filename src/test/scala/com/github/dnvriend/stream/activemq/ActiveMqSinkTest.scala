@@ -22,6 +22,9 @@ import com.github.dnvriend.stream.{ PersonDomain, TestSpec }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
+import PersonDomain._
+import JsonMessageBuilder._
+import JsonMessageExtractor._
 
 class ActiveMqSinkTest extends TestSpec {
   it should "produce messages to a queue" in {
@@ -52,7 +55,6 @@ class ActiveMqSinkTest extends TestSpec {
             case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
           }
         }
-
         pub.sendComplete()
         sub.cancel()
       }
@@ -65,9 +67,16 @@ class ActiveMqSinkTest extends TestSpec {
     import JsonMessageExtractor._
     val numberOfPersons = 250
     Source.repeat(testPerson).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
-    val xs = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).futureValue
+    val xs: Seq[Person] = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).futureValue
     xs should not be 'empty
     xs.size shouldBe numberOfPersons
     xs.foreach { _ shouldBe `testPerson` }
+  }
+
+  it should "copy messages from queue and put on topic" in {
+    Source.repeat(testPerson).take(10).runWith(ActiveMqSink("PersonProducer"))
+    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.Person").value shouldBe 10)
+    ActiveMqSource[Person]("PersonConsumer").take(10).runWith(AckActiveMqSink("PersonCopyProducer")).futureValue
+    //    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.PersonCopy").value shouldBe 10)
   }
 }

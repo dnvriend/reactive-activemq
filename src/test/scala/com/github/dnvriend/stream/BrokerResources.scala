@@ -19,13 +19,9 @@ package com.github.dnvriend.stream
 import java.io.InputStream
 import java.net.URL
 
-import com.github.dnvriend.stream.BrokerResources.QueueStat
+import com.github.dnvriend.stream.BrokerResources.{ QueueStat, TopicStat }
 
 import scala.xml.NodeSeq
-
-object BrokerResources {
-  case class QueueStat(name: String, size: Int, consumerCount: Int, enqueueCount: Int, dequeueCount: Int)
-}
 
 trait BrokerResources {
   private def callBroker(path: String): InputStream = {
@@ -42,10 +38,26 @@ trait BrokerResources {
     XML.load(callBroker("/admin/xml/queues.jsp"))
   }
 
+  def getTopicXmlFromBroker: NodeSeq = {
+    import scala.xml.XML
+    XML.load(callBroker("/admin/xml/topics.jsp"))
+  }
+
   def getQueueStats: List[QueueStat] = (for {
     e ← getQueueXmlFromBroker \\ "queue"
     stat ← e \ "stats"
   } yield QueueStat(
+    (e \ "@name").text,
+    (stat \ "@size").text.toInt,
+    (stat \ "@consumerCount").text.toInt,
+    (stat \ "@enqueueCount").text.toInt,
+    (stat \ "@dequeueCount").text.toInt
+  )).toList
+
+  def getTopicStats: List[TopicStat] = (for {
+    e ← getTopicXmlFromBroker \\ "topic"
+    stat ← e \ "stats"
+  } yield TopicStat(
     (e \ "@name").text,
     (stat \ "@size").text.toInt,
     (stat \ "@consumerCount").text.toInt,
@@ -64,4 +76,16 @@ trait BrokerResources {
   def getQueueList: List[String] = (for {
     e ← getQueueXmlFromBroker \\ "queue"
   } yield (e \ "@name").text).toList
+
+  def getQueueStatFor(topic: String): Option[QueueStat] =
+    getQueueStats.find(_.name contains topic)
+
+  def getQueueMessageCount(topic: String): Option[Int] = for {
+    stat ← getQueueStatFor(topic)
+  } yield stat.enqueueCount - stat.dequeueCount
+}
+
+object BrokerResources {
+  case class QueueStat(name: String, size: Int, consumerCount: Int, enqueueCount: Int, dequeueCount: Int)
+  case class TopicStat(name: String, size: Int, consumerCount: Int, enqueueCount: Int, dequeueCount: Int)
 }

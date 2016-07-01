@@ -1,4 +1,4 @@
-# reactive-activemq v0.0.3
+# reactive-activemq v0.0.6
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
 components, the [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume and produce messages with 
 [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
@@ -18,7 +18,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.3"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.6"
 ```
 
 ## Limitations
@@ -339,6 +339,22 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 - [op-rabbit][op-rabbit]
 
 # Whats new?
+- v0.0.6 (2016-07-01)
+  - Merged PR #2 [Merlijn Boogerd][mboogerd] - Added component `AckBidiFlow`, thanks!
+  - Added `AckBidiFlow`, which is a naive implementation of a bidirectional flow from/to ActiveMq; it assumes:
+    - a 1 on 1 correspondence ([bijection][bijection]) between items sent from Out and received on In,
+    - that ordering is preserved between Out and In; i.e. no mapAsyncUnordered, ideally no network traversals; careful with dispatching to actors,
+    - that at-least-once-delivery is acceptable on ActiveMqSink,
+    - The `AckBidiFlow` flow is practical for the typical use case of handling a request received from ActiveMq, 
+      processing it with some bidi-flow, and dispatching a response to ActiveMq. The original requests gets acked 
+      once the response is sent.
+
+- v0.0.5 (2016-07-01)
+  - Refactored package structure
+  - Added `CamelActorPublisher`
+  - Added `XMLEventSource`, a `Source[XMLEvent, NotUsed]` that reads a file or inputstream and
+    emits `scala.xml.pull.XMLEvent` for processing large XML files very fast with efficient memory usage.
+
 - v0.0.4 (2016-06-30)
   - Added two new components, the `AckJournalSink` and the `JournalSink`.
 
@@ -376,3 +392,6 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [mat]: http://doc.akka.io/docs/akka/current/scala/stream/stream-composition.html#materialized-values
 [demand]: http://doc.akka.io/docs/akka/current/scala/stream/stream-flows-and-basics.html#Back-pressure_explained
 [typesafe-config]: https://github.com/typesafehub/config
+
+[mboogerd]: https://github.com/mboogerd
+[bijection]: https://en.wikipedia.org/wiki/Bijection

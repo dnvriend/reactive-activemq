@@ -26,6 +26,8 @@ resolvers += Resolver.jcenterRepo
 
 resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-releases/"
 
+testOptions in Test += Tests.Argument("-oD")
+
 libraryDependencies ++= {
   val akkaVersion = "2.4.7"
   val activeMqVersion = "5.9.1"

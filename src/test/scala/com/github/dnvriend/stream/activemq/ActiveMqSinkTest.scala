@@ -20,8 +20,8 @@ import akka.stream.scaladsl.Source
 import com.github.dnvriend.stream.PersonDomain._
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
-import com.github.dnvriend.stream.camel.{JsonMessageBuilder, JsonMessageExtractor}
-import com.github.dnvriend.stream.{PersonDomain, TestSpec}
+import com.github.dnvriend.stream.camel.{ JsonMessageBuilder, JsonMessageExtractor }
+import com.github.dnvriend.stream.{ PersonDomain, TestSpec }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -67,12 +67,15 @@ class ActiveMqSinkTest extends TestSpec {
     import PersonDomain._
     val numberOfPersons = 250
     Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
-    val xs: Seq[Person] = ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).futureValue
-    xs should not be 'empty
-    xs.size shouldBe numberOfPersons
-    xs.foreach {
-      _ shouldBe testPerson1
-    }
+  }
+
+  it should "send and receive 250 messages from the queue" in {
+    import JsonMessageBuilder._
+    import JsonMessageExtractor._
+    import PersonDomain._
+    val numberOfPersons = 250
+    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
+    ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
   }
 
   it should "copy messages from queue and put on topic" in {

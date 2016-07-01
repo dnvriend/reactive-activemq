@@ -24,13 +24,12 @@ class PersonXmlProcessorTest extends TestSpec {
   it should "process full person" in {
     withTestXMLPersonParser()(PersonsXmlFile) { tp ⇒
       tp.request(1)
-      tp.expectNext(testPerson)
+      tp.expectNext(testPerson1)
       tp.expectNoMsg(100.millis)
     }
   }
 
   it should "count a lot of persons" in {
-    Thread.sleep(10.seconds.toMillis)
     withInputStream(LotOfPersonsXmlFile) { is ⇒
       XMLEventSource.fromInputStream(is)
         .via(PersonParser())

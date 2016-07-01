@@ -19,26 +19,24 @@ package com.github.dnvriend.stream
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.{ Logging, LoggingAdapter }
 import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal}
+import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
 import akka.stream.scaladsl.Sink
-import akka.stream.testkit.TestPublisher.Probe
-import akka.stream.testkit.TestSubscriber.Probe
-import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.stream.testkit.{TestPublisher, TestSubscriber}
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
+import akka.stream.testkit.{ TestPublisher, TestSubscriber }
+import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
 import com.github.dnvriend.stream.activemq._
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
 import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
 import org.scalatest._
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 import scala.xml.pull.XMLEvent
 
@@ -68,6 +66,11 @@ trait TestSpec extends FlatSpec
   val log: LoggingAdapter = Logging(system, this.getClass)
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
   implicit val timeout = Timeout(30.seconds)
+
+  override val db = {
+    import slick.jdbc.JdbcBackend._
+    Database.forConfig("slick.db", system.settings.config)
+  }
 
   val journal = PersistenceQuery(system)
     .readJournalFor("jdbc-read-journal")
@@ -99,10 +102,10 @@ trait TestSpec extends FlatSpec
       tp.within(within)(f(tp))
     }
 
-  def withTestXMLPersonParser(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[Person] ⇒ Unit): Unit =
+  def withTestXMLPersonParser(within: FiniteDuration = 5.seconds)(filename: String)(f: TestSubscriber.Probe[Person] ⇒ Unit): Unit =
     withInputStream(filename) { is ⇒
       val tp = XMLEventSource.fromInputStream(is).via(PersonParser()).runWith(TestSink.probe[Person])
-      tp.within(60.seconds)(f(tp))
+      tp.within(within)(f(tp))
     }
 
   def randomId = UUID.randomUUID.toString
@@ -116,6 +119,7 @@ trait TestSpec extends FlatSpec
   }
 
   override protected def afterAll(): Unit = {
+    db.close()
     system.terminate().toTry should be a 'success
   }
 }

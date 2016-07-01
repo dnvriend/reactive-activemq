@@ -1,18 +1,33 @@
+/*
+ * Copyright 2016 Dennis Vriend
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.github.dnvriend.stream.activemq
 
 import akka.Done
 import akka.stream.FlowShape
-import akka.stream.scaladsl.{Flow, GraphDSL}
-import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.stream.testkit.{TestPublisher, TestSubscriber}
+import akka.stream.scaladsl.{ Flow, GraphDSL }
+import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
+import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.testkit.TestProbe
 import com.github.dnvriend.stream.PersonDomain.Person
 import com.github.dnvriend.stream.TestSpec
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
 
-import scala.concurrent.{Future, Promise}
-
+import scala.concurrent.{ Future, Promise }
 
 class AckBidiFlowTest extends TestSpec {
 
@@ -85,10 +100,9 @@ class AckBidiFlowTest extends TestSpec {
     }
   }
 
-
   /**
-    * Creates an acknowledging bidirectional flow whose input, back-end and output can be manipulated using probes
-    */
+   * Creates an acknowledging bidirectional flow whose input, back-end and output can be manipulated using probes
+   */
   def withAckBidiFlow(test: TestPublisher.Probe[AckTup[Person]] ⇒ TestProbe ⇒ TestSubscriber.Probe[AckTup[Person]] ⇒ Any): Unit = {
     import akka.pattern.ask
     val flowProbe = TestProbe()
@@ -113,13 +127,11 @@ class AckBidiFlowTest extends TestSpec {
     test(inputProbe)(flowProbe)(outputProbe)
   }
 
-
   /**
-    * Creates an acknowledging bidirectional flow, connected with an ActiveMqSource and ActiveMqSink
-    *
-    * NOTE: Test using this fixture assume correct implementation of ActiveMqSource and ActiveMqSink!
-    */
-  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)
-                                (test: Flow[Person, Person, Future[Done]] ⇒ Any): Unit =
+   * Creates an acknowledging bidirectional flow, connected with an ActiveMqSource and ActiveMqSink
+   *
+   * NOTE: Test using this fixture assume correct implementation of ActiveMqSource and ActiveMqSink!
+   */
+  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)(test: Flow[Person, Person, Future[Done]] ⇒ Any): Unit =
     test(AckBidiFlow[Person, Person](sourceEndpoint, sinkEndpoint))
 }

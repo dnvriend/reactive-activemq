@@ -20,15 +20,18 @@ import java.sql.{ ResultSet, Statement }
 
 import akka.actor.ActorSystem
 import slick.driver.PostgresDriver.api._
+import slick.jdbc.JdbcBackend
 
 import scala.annotation.tailrec
 
 trait DatabaseResources {
 
+  def db: Database
+
   def system: ActorSystem
 
   def withDatabase[A](f: Database ⇒ A): A =
-    f(Database(system).db)
+    f(db)
 
   def withSession[A](f: Session ⇒ A): A = {
     withDatabase { db ⇒

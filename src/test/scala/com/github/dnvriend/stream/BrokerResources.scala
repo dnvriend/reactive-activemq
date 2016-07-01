@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq
+package com.github.dnvriend.stream
 
 import java.io.InputStream
 import java.net.URL
 
-import com.github.dnvriend.activemq.BrokerResources.QueueStat
+import com.github.dnvriend.stream.BrokerResources.QueueStat
 
 import scala.xml.NodeSeq
 

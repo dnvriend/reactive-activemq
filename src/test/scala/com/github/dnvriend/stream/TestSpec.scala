@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq
+package com.github.dnvriend.stream
 
 import java.util.UUID
 
@@ -27,10 +27,10 @@ import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
-import com.github.dnvriend.activemq.BrokerResources.QueueStat
-import com.github.dnvriend.activemq.stream.JsonMessageBuilder._
-import com.github.dnvriend.activemq.stream.JsonMessageExtractor._
-import com.github.dnvriend.activemq.stream._
+import com.github.dnvriend.stream.BrokerResources.QueueStat
+import com.github.dnvriend.stream.activemq._
+import com.github.dnvriend.stream.camel.JsonMessageBuilder._
+import com.github.dnvriend.stream.camel.JsonMessageExtractor._
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol

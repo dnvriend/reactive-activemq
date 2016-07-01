@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.activemq
 
 import akka.stream.scaladsl.Source
-import com.github.dnvriend.activemq.{ PersonDomain, TestSpec }
+import com.github.dnvriend.stream.camel.{ JsonMessageBuilder, JsonMessageExtractor }
+import com.github.dnvriend.stream.{ PersonDomain, TestSpec }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._

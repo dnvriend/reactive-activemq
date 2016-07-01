@@ -14,45 +14,21 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.activemq
 
-import akka.NotUsed
-import akka.actor.{ ActorLogging, ActorRef, ActorSystem, Props }
-import akka.camel.{ CamelMessage, Consumer }
-import akka.event.LoggingReceive
+import akka.actor.{ ActorRef, ActorSystem }
+import akka.camel.CamelMessage
 import akka.stream._
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage.Cancel
-import akka.stream.scaladsl.{ Keep, Source }
+import akka.stream.scaladsl.Source
 import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
-import com.github.dnvriend.activemq.extension.ActiveMqExtension
+import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
+import com.github.dnvriend.stream.camel.{ CamelActorPublisher, MessageExtractor }
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
 
-class CamelConsumer[A](val endpointUri: String)(implicit extractor: MessageExtractor[CamelMessage, A]) extends Consumer with ActorPublisher[(ActorRef, A)] with ActorLogging {
-  override val autoAck: Boolean = false
-
-  override def receive: Receive = LoggingReceive {
-    case CamelMessage if totalDemand == 0 ⇒
-      sender() ! akka.actor.Status.Failure(new IllegalStateException("No demand for new messages"))
-
-    case msg: CamelMessage ⇒
-      try {
-        onNext((sender(), extractor.extract(msg)))
-      } catch {
-        case t: Throwable ⇒
-          log.error(t, "Removing message from the broker because of error while extracting the message")
-          sender() ! akka.camel.Ack
-      }
-
-    case Cancel ⇒ context.stop(self)
-  }
-}
-
 object ActiveMqSource {
-  def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckTup[A], NotUsed] =
-    Source.actorPublisher[(ActorRef, A)](Props(new CamelConsumer[A](ActiveMqExtension(system).consumerEndpointUri(consumerName))))
-      .viaMat(new AckedFlow)(Keep.none)
+  def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckTup[A], ActorRef] =
+    CamelActorPublisher.fromEndpointUriWithExtractor[A](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedFlow)
 }
 
 private class AckedFlow[A](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, A), AckTup[A]]] {

@@ -34,6 +34,7 @@ libraryDependencies ++= {
   val jdbcVersion = "2.5.0"
   val slickVersion = "3.1.1"
   Seq(
+    "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,

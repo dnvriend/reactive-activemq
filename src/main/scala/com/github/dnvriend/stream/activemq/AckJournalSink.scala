@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.activemq
 
 import akka.actor.{ ActorLogging, ActorRef, Props }
 import akka.event.LoggingReceive

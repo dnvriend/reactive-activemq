@@ -36,4 +36,4 @@ docker-compose up -d
 wait 8161 Activemq
 wait 5432 Postgres
 sbt clean test
-docker rm -f $(docker ps -aq)
+#docker rm -f $(docker ps -aq)

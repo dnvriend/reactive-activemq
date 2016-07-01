@@ -14,25 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend
 
-import com.github.dnvriend.activemq.TestSpec
-
-import scala.concurrent.Promise
-
-class ActiveMqSourceTest extends TestSpec {
-  it should "consume messages from the queue" in {
-    withTestTopicSubscriber() { sub ⇒
-      withTestTopicPublisher() { pub ⇒
-        pub.sendNext(testPerson)
-        pub.sendComplete()
-
-        sub.request(1)
-        sub.expectNextPF {
-          case (p: Promise[Unit], `testPerson`) ⇒ p.success(())
-        }
-        sub.cancel()
-      }
-    }
-  }
+package object stream {
+  type Seq[A] = scala.collection.immutable.Seq[A]
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq
+package com.github.dnvriend.stream
 
 import java.sql.{ ResultSet, Statement }
 

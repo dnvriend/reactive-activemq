@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.activemq
 
 import akka.actor.ActorSystem
 import akka.event.{ LoggingAdapter, LoggingReceive }
@@ -24,7 +24,7 @@ import akka.persistence.{ PersistentActor, RecoveryCompleted, SnapshotOffer }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
-import com.github.dnvriend.activemq.stream.ResumableProjection.JournalQueries
+import com.github.dnvriend.stream.activemq.ResumableProjection.JournalQueries
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -61,6 +61,7 @@ class ResumableProjection(projectionName: String, readJournalId: String)(implici
   /**
    * Will be called right after the recovery has been completed. The outcome is the latestOffset
    * that can be used to create a Query
+   *
    * @param latestOffset
    * @param journal
    */

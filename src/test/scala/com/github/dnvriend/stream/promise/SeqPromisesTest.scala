@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.promise
+package com.github.dnvriend.stream.promise
 
-import com.github.dnvriend.activemq.TestSpec
+import com.github.dnvriend.stream.TestSpec
 
 import scala.collection.immutable.Seq
 import scala.concurrent.{ Future, Promise }

@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.camel
 
-import akka.camel.CamelMessage
-import spray.json.JsonReader
+import akka.actor.{ActorLogging, Props}
+import akka.camel.{CamelMessage, Producer}
+import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
+import akka.stream.scaladsl.Sink
 
-trait MessageExtractor[IN, OUT] {
-  def extract(in: IN): OUT
+class CamelActorSubscriber(val endpointUri: String) extends Producer with ActorSubscriber with ActorLogging {
+  override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
 }
 
-trait JsonMessageExtractor {
-  implicit def jsonMessageExtractor[A: JsonReader] = new MessageExtractor[CamelMessage, A] {
-    import spray.json._
-    override def extract(in: CamelMessage): A = {
-      val jsonStr = in.body.asInstanceOf[String]
-      jsonStr.parseJson.convertTo[A]
-    }
-  }
+object CamelFlow {
+  def fromEndpointUri(endpointUri: String) =
+    Sink.actorSubscriber[CamelMessage](Props(new CamelActorSubscriber(endpointUri)))
 }
-
-object JsonMessageExtractor extends JsonMessageExtractor

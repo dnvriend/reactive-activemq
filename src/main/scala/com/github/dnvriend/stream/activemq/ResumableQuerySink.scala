@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq
+package com.github.dnvriend.stream.activemq
 
-package object stream {
-  import scala.concurrent.Promise
-  type AckTup[A] = (Promise[Unit], A)
+import akka.persistence.PersistentActor
+import akka.stream.actor.{ ActorSubscriber, RequestStrategy }
+import akka.stream.scaladsl.Flow
+
+class ResumableQuerySink extends PersistentActor with ActorSubscriber {
+
+  override protected def requestStrategy: RequestStrategy = ???
+
+  override def receiveRecover: Receive = ???
+
+  override def receiveCommand: Receive = ???
+
+  override def persistenceId: String = ???
 }

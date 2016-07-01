@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream.activemq
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
 
 import scala.concurrent.{ ExecutionContext, Future }

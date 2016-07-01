@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq.stream
+package com.github.dnvriend.stream
 
-import akka.persistence.PersistentActor
+import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
+import slick.jdbc.JdbcBackend
 
-class ResumableQuerySink extends PersistentActor {
-  override def receiveRecover: Receive = ???
+object Database extends ExtensionId[DatabaseImpl] with ExtensionIdProvider {
+  override def createExtension(system: ExtendedActorSystem): DatabaseImpl = new DatabaseImpl()(system)
 
-  override def receiveCommand: Receive = ???
+  override def lookup(): ExtensionId[_ <: Extension] = Database
+}
 
-  override def persistenceId: String = ???
+class DatabaseImpl()(implicit val system: ExtendedActorSystem) extends JdbcBackend with Extension {
+  val db: Database = Database.forConfig("slick.db", system.settings.config)
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend
+package com.github.dnvriend.stream.activemq
 
-package object activemq {
-  type Seq[A] = scala.collection.immutable.Seq[A]
+object ResumableQuerySource {
+
 }

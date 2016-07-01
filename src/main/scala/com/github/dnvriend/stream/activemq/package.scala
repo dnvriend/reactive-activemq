@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.activemq
+package com.github.dnvriend.stream
 
-import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
-import slick.jdbc.JdbcBackend
+import akka.actor.ActorRef
 
-object Database extends ExtensionId[DatabaseImpl] with ExtensionIdProvider {
-  override def createExtension(system: ExtendedActorSystem): DatabaseImpl = new DatabaseImpl()(system)
-
-  override def lookup(): ExtensionId[_ <: Extension] = Database
-}
-
-class DatabaseImpl()(implicit val system: ExtendedActorSystem) extends JdbcBackend with Extension {
-  val db: Database = Database.forConfig("slick.db", system.settings.config)
+package object activemq {
+  import scala.concurrent.Promise
+  type AckTup[A] = (Promise[Unit], A)
+  type AckRefTup[A] = (ActorRef, A)
 }

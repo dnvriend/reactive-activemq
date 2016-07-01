@@ -24,17 +24,15 @@ import akka.util.ByteString
 
 import scala.concurrent.Future
 import scala.io.{ Source ⇒ ScalaIOSource }
-import scala.util.Try
 
 trait ClasspathResources {
   def withInputStream[T](fileName: String)(f: InputStream ⇒ T): T = {
-    val is = fromClasspathAsStream(fileName)
-    try {
-      f(is)
-    } finally {
-      Try(is.close())
-    }
+    val is: InputStream = fromClasspathAsStream(fileName)
+    try f(is) finally is.close()
   }
+
+  def withInputStreamAsText[T](fileName: String)(f: String ⇒ T): T =
+    f(fromClasspathAsString(fileName))
 
   def withByteStringSource[T](fileName: String)(f: Source[ByteString, Future[IOResult]] ⇒ T): T =
     withInputStream(fileName) { inputStream ⇒

@@ -31,6 +31,7 @@ import com.github.dnvriend.stream.BrokerResources.QueueStat
 import com.github.dnvriend.stream.activemq._
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
+import com.github.dnvriend.stream.xml.XMLEventSource
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol
@@ -38,16 +39,27 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
+import scala.xml.pull.XMLEvent
 
 object PersonDomain extends DefaultJsonProtocol {
-  final case class Address(street: String, houseNumber: String, zipCode: String)
+  final case class Address(street: String, houseNumber: String, zipCode: String, city: String)
   final case class Person(firstName: String, lastName: String, age: Int, address: Address)
 
-  implicit val jsonAddressFormat = jsonFormat3(Address)
+  implicit val jsonAddressFormat = jsonFormat4(Address)
   implicit val jsonPersonFormat = jsonFormat4(Person)
 }
 
-trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResources with BeforeAndAfterEach with BeforeAndAfterAll with OptionValues with Eventually with DatabaseResources {
+trait TestSpec extends FlatSpec
+    with Matchers
+    with ScalaFutures
+    with BrokerResources
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with OptionValues
+    with Eventually
+    with DatabaseResources
+    with ClasspathResources {
+
   import PersonDomain._
   implicit val system: ActorSystem = ActorSystem()
   implicit val mat: Materializer = ActorMaterializer()
@@ -60,7 +72,9 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
     .readJournalFor("jdbc-read-journal")
     .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with EventsByPersistenceIdQuery]
 
-  val testPerson = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500"))
+  val testPerson = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
+
+  final val PersonsXmlFile = "xml/persons.xml"
 
   implicit class PimpedByteArray(self: Array[Byte]) {
     def getString: String = new String(self)
@@ -75,6 +89,12 @@ trait TestSpec extends FlatSpec with Matchers with ScalaFutures with BrokerResou
 
   def withTestTopicSubscriber()(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
     f(ActiveMqSource[Person]("PersonConsumer").runWith(TestSink.probe[AckTup[Person]](system)))
+
+  def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] ⇒ Unit): Unit =
+    withInputStream(filename) { is ⇒
+      val tp = XMLEventSource.fromInputStream(is).runWith(TestSink.probe[XMLEvent])
+      tp.within(within)(f(tp))
+    }
 
   def randomId = UUID.randomUUID.toString
 

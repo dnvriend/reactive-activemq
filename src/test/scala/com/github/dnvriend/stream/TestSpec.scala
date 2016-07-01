@@ -27,11 +27,10 @@ import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
-import com.github.dnvriend.stream.BrokerResources.QueueStat
 import com.github.dnvriend.stream.activemq._
 import com.github.dnvriend.stream.camel.JsonMessageBuilder._
 import com.github.dnvriend.stream.camel.JsonMessageExtractor._
-import com.github.dnvriend.stream.xml.XMLEventSource
+import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol
@@ -42,8 +41,8 @@ import scala.util.Try
 import scala.xml.pull.XMLEvent
 
 object PersonDomain extends DefaultJsonProtocol {
-  final case class Address(street: String, houseNumber: String, zipCode: String, city: String)
-  final case class Person(firstName: String, lastName: String, age: Int, address: Address)
+  final case class Address(street: String = "", houseNumber: String = "", zipCode: String = "", city: String = "")
+  final case class Person(firstName: String = "", lastName: String = "", age: Int = 0, address: Address = Address())
 
   implicit val jsonAddressFormat = jsonFormat4(Address)
   implicit val jsonPersonFormat = jsonFormat4(Person)
@@ -75,6 +74,7 @@ trait TestSpec extends FlatSpec
   val testPerson = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
 
   final val PersonsXmlFile = "xml/persons.xml"
+  final val LotOfPersonsXmlFile = "xml/lot-of-persons.xml"
 
   implicit class PimpedByteArray(self: Array[Byte]) {
     def getString: String = new String(self)
@@ -94,6 +94,12 @@ trait TestSpec extends FlatSpec
     withInputStream(filename) { is ⇒
       val tp = XMLEventSource.fromInputStream(is).runWith(TestSink.probe[XMLEvent])
       tp.within(within)(f(tp))
+    }
+
+  def withTestXMLPersonParser(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[Person] ⇒ Unit): Unit =
+    withInputStream(filename) { is ⇒
+      val tp = XMLEventSource.fromInputStream(is).via(PersonParser()).runWith(TestSink.probe[Person])
+      tp.within(60.seconds)(f(tp))
     }
 
   def randomId = UUID.randomUUID.toString

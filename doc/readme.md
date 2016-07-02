@@ -133,6 +133,9 @@ A ByteStringBuilder can be wrapped in a java.io.OutputStream via the asOutputStr
 ByteIterator can be wrapped in a java.io.InputStream via asInputStream. Using these, akka.io applications
 can integrate legacy code based on java.io streams.
 
+# akka.stream.scaladsl.StreamConverters
+Converters for interacting with the blocking `java.io` streams APIs and Java 8 Streams
+
 # Misc notes
 
 - akka.stream.scaladsl.FileIO
@@ -154,8 +157,11 @@ An ActorSubscriber that does the actual work
 
 ... but.. all of this are all internal for akka only APIs :(
 
+- [Java Cryptography Architecture Sun Providers Documentation][JCA]
 
 
 [bytestring]: http://doc.akka.io/docs/akka/current/scala/io.html#ByteString
 [custom-stream]: http://doc.akka.io/docs/akka/current/scala/stream/stream-customize.html
 [handlers]: http://doc.akka.io/docs/akka/current/scala/stream/stream-customize.html#Port_states__InHandler_and_OutHandler
+[cookbook]: http://doc.akka.io/docs/akka/current/scala/stream/stream-cookbook.html
+[JCA]: http://docs.oracle.com/javase/6/docs/technotes/guides/security/SunProviders.html

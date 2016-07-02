@@ -15,10 +15,10 @@
  */
 
 package com.github.dnvriend.stream
+package io
 
-import akka.util.ByteString
+import akka.Done
 
-package object io {
-  type Digest = ByteString
-  type Seq[A] = scala.collection.immutable.Seq[A]
-}
+import scala.util.Try
+
+final case class DigestResult(messageDigest: Digest, status: Try[Done])

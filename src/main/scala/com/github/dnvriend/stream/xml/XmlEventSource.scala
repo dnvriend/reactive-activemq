@@ -17,13 +17,13 @@
 package com.github.dnvriend.stream
 package xml
 
-import java.io.{BufferedInputStream, File, FileInputStream, InputStream}
+import java.io.{ BufferedInputStream, File, FileInputStream, InputStream }
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 
-import scala.io.{Source => ScalaIOSource}
-import scala.xml.pull.{XMLEvent, XMLEventReader}
+import scala.io.{ Source ⇒ ScalaIOSource }
+import scala.xml.pull.{ XMLEvent, XMLEventReader }
 
 object XMLEventSource {
   def fromInputStream(xml: InputStream): Source[XMLEvent, NotUsed] =

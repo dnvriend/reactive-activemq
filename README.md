@@ -345,8 +345,8 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
     - a 1 on 1 correspondence ([bijection][bijection]) between items sent from Out and received on In,
     - that ordering is preserved between Out and In; i.e. no mapAsyncUnordered, ideally no network traversals; careful with dispatching to actors,
     - that at-least-once-delivery is acceptable on ActiveMqSink,
-    - The `AckBidiFlow` flow is practical for the typical use case of handling a request received from ActiveMq, 
-      processing it with some bidi-flow, and dispatching a response to ActiveMq. The original requests gets acked 
+    - The `AckBidiFlow` flow is practical for the typical use case of handling a request received from ActiveMq,
+      processing it with some bidi-flow, and dispatching a response to ActiveMq. The original requests gets acked
       once the response is sent.
 
 - v0.0.5 (2016-07-01)
@@ -373,16 +373,6 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 [op-rabbit]: https://github.com/SpinGo/op-rabbit
 [spingo]: https://www.spingo.com/
 [config]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/resources/reference.conf
-[extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/extension/ActiveMqExtension.scala
-[builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageBuilder.scala
-[extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/MessageExtractor.scala
-[amqsource]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/ActiveMqSource.scala
-[amqsink]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/ActiveMqSink.scala
-[fmap]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L40
-[fmapack]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L27
-[fmapasync]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L44
-[runforeach]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/activemq/stream/AckedFlowOps.scala#L55
-[msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala
 [vt]: http://activemq.apache.org/virtual-destinations.html
 [amq]: http://activemq.apache.org/
 [akka-streams]: http://doc.akka.io/docs/akka/current/scala/stream/index.html
@@ -395,3 +385,10 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 
 [mboogerd]: https://github.com/mboogerd
 [bijection]: https://en.wikipedia.org/wiki/Bijection
+
+[extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/extension/ActiveMqExtension.scala
+[builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageBuilder.scala
+[extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageExtractor.scala
+[amqsource]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqSource.scala
+[amqsink]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqSink.scala
+[msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala

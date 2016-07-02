@@ -17,34 +17,35 @@
 package com.github.dnvriend.stream
 package activemq
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
+import akka.camel.CamelMessage
 import akka.stream._
-import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
+import akka.stream.scaladsl.Source
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
+import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
+import com.github.dnvriend.stream.camel.CamelActorPublisher
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
-private[activemq] class AckedFlow[A](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, A), AckTup[A]]] {
-  val in = Inlet[(ActorRef, A)]("AckedFlow.in")
-  val out = Outlet[AckTup[A]]("AckedFlow.out")
+private[activemq] class AckedFlow[A, B](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, B), AckTup[A, B]]] {
+  val in = Inlet[(ActorRef, B)]("AckedFlow.in")
+  val out = Outlet[AckTup[A, B]]("AckedFlow.out")
 
-  override val shape: FlowShape[(ActorRef, A), AckTup[A]] = FlowShape.of(in, out)
+  override val shape: FlowShape[(ActorRef, B), AckTup[A, B]] = FlowShape.of(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    var promises = Vector.empty[(Promise[Unit], Future[Unit])]
+    var promises = Vector.empty[(Promise[A], Future[A])]
     setHandler(in, new InHandler {
       override def onPush(): Unit = {
         val (ref, b) = grab(in)
-        val p = Promise[Unit]()
-        val f = p.future
-        f.onSuccess {
-          case _ ⇒
-            ref ! akka.camel.Ack
-        }
-        f.onFailure {
+        val p = Promise[A]()
+        val eventualResponse = p.future
+        eventualResponse.onSuccess(successResponse(ref))
+        eventualResponse.onFailure {
           case cause: Throwable ⇒
             ref ! akka.actor.Status.Failure(cause)
         }
-        promises = promises.filterNot(_._1.isCompleted) ++ Option(p → f)
+        promises = promises.filterNot(_._1.isCompleted) :+ (p → eventualResponse)
         push(out, p → b)
       }
     })
@@ -54,5 +55,16 @@ private[activemq] class AckedFlow[A](implicit ec: ExecutionContext) extends Grap
         pull(in)
       }
     })
+  }
+
+  /* Extracted to allow overriding for request-response pattern */
+  def successResponse(source: ActorRef): PartialFunction[A, Unit] = {
+    case _ ⇒ source ! akka.camel.Ack
+  }
+}
+
+class AckedResponseFlow[A, B](implicit ec: ExecutionContext, builder: MessageBuilder[A, CamelMessage]) extends AckedFlow[A, B] {
+  override def successResponse(source: ActorRef): PartialFunction[A, Unit] = {
+    case msg ⇒ source ! builder.build(msg)
   }
 }

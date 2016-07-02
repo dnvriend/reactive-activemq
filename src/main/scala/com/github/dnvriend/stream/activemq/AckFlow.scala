@@ -17,10 +17,11 @@
 package com.github.dnvriend.stream
 package activemq
 
-import akka.NotUsed
-import akka.stream.scaladsl.Flow
+import akka.{Done, NotUsed}
+import akka.stream.Materializer
+import akka.stream.scaladsl.{Flow, Source}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 object AckFlow {
 
@@ -28,7 +29,7 @@ object AckFlow {
    * Transform this stream by applying the given function to each of the elements
    * as they pass through this processing step, acking each message.
    */
-  def map[A, B](f: A ⇒ B): Flow[AckTup[A], AckTup[B], NotUsed] = Flow[AckTup[A]].map {
+  def map[A, B](f: A ⇒ B): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].map {
     case (p, a) ⇒
       try {
         val out = p → f(a)
@@ -45,7 +46,7 @@ object AckFlow {
    * Transform this stream by applying the given function to each of the elements
    * as they pass through this processing step, acking each message.
    */
-  def mapAsync[A, B](qos: Int)(f: A ⇒ Future[B])(implicit ec: ExecutionContext): Flow[AckTup[A], AckTup[B], NotUsed] = Flow[AckTup[A]].mapAsync(qos) {
+  def mapAsync[A, B](qos: Int)(f: A ⇒ Future[B])(implicit ec: ExecutionContext): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].mapAsync(qos) {
     case (p, a) ⇒ f(a).map { b ⇒
       if (!p.isCompleted) p.success(())
       p → b
@@ -59,7 +60,7 @@ object AckFlow {
   /**
    * Only pass on those elements that satisfy the given predicate, acking each message.
    */
-  def filter[A](predicate: A ⇒ Boolean): Flow[AckTup[A], AckTup[A], NotUsed] = Flow[AckTup[A]].filter {
+  def filter[A](predicate: A ⇒ Boolean): Flow[AckUTup[A], AckUTup[A], NotUsed] = Flow[AckUTup[A]].filter {
     case (p, a) ⇒
       try {
         val bool = predicate(a)

@@ -29,7 +29,6 @@ import akka.{ Done, NotUsed }
 import scala.concurrent.{ ExecutionContext, Future }
 
 object ResumableProjection {
-  type JournalQueries = ReadJournal with EventsByPersistenceIdQuery with EventsByTagQuery
   final case class LatestOffset(offset: Long)
 }
 

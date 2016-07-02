@@ -32,7 +32,7 @@ object ActiveMqSource {
     CamelActorPublisher.fromEndpointUriWithExtractor[A](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedFlow)
 }
 
-class AckedFlow[A](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, A), AckTup[A]]] {
+private[activemq] class AckedFlow[A](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, A), AckTup[A]]] {
   val in = Inlet[(ActorRef, A)]("AckedFlow.in")
   val out = Outlet[AckTup[A]]("AckedFlow.out")
 

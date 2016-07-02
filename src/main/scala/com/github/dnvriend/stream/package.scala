@@ -17,9 +17,12 @@
 package com.github.dnvriend
 
 import akka.actor.ActorRef
+import akka.persistence.query.scaladsl.{ EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
+
 import scala.concurrent.Promise
 
 package object stream {
+  type JournalQueries = ReadJournal with EventsByPersistenceIdQuery with EventsByTagQuery
   type Seq[A] = scala.collection.immutable.Seq[A]
   type AckTup[A] = (Promise[Unit], A)
   type AckRefTup[A] = (ActorRef, A)

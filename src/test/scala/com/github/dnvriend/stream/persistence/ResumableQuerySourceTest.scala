@@ -17,28 +17,24 @@
 package com.github.dnvriend.stream
 package persistence
 
+import akka.Done
+import akka.persistence.query.EventEnvelope
+import akka.stream.scaladsl.{ Flow, Source }
+
+import scala.concurrent.Future
+
 class ResumableQuerySourceTest extends TestSpec {
 
-  //  def withQueryFromOffset(f: Source[AckTup[EventEnvelope], ActorRef] ⇒ Unit): Unit =
-  //    f(ResumableQuerySource("NumberJournalQuery", "jdbc-read-journal") { offset ⇒
-  //      val startFrom = offset + 1
-  //      println("Starting from: " + startFrom)
-  //      journal.eventsByPersistenceId("NumberJournal", startFrom, Long.MaxValue)
-  //    })
-  //
-  //  it should "resume from the last offset" in {
-  //    Source.fromIterator(() ⇒ Iterator from 0).take(10).runWith(JournalSink("NumberJournal"))
-  //    eventually(countJournal("NumberJournal").futureValue shouldBe 10)
-  //
-  //    (0 to 3) foreach { _ ⇒
-  //      withQueryFromOffset { src ⇒
-  //        val (ref, fut) = src.take(2).toMat(AckSink.foreach(println))(Keep.both).run()
-  //        fut.futureValue
-  //        //        Thread.sleep(5.seconds.toMillis)
-  //        val tp = TestProbe()
-  //        tp watch ref
-  //        tp.expectTerminated(ref)
-  //      }
-  //    }
-  //  }
+  def withQueryFromOffset(f: Flow[EventEnvelope, EventEnvelope, Future[Done]] ⇒ Unit): Unit = {
+    f(ResumableQuery("q1", offset ⇒ journal.eventsByPersistenceId("NumberJournal", offset + 1, Long.MaxValue)))
+  }
+
+  it should "resume from the last offset" in {
+    //    Source.fromIterator(() ⇒ Iterator from 0).runWith(JournalSink("NumberJournal"))
+    //        eventually(countJournal("NumberJournal").futureValue shouldBe 10)
+
+    withQueryFromOffset { flow ⇒
+      flow.join(Flow[EventEnvelope].map { e ⇒ println(e); e }).run().futureValue
+    }
+  }
 }

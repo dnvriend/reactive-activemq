@@ -24,52 +24,32 @@ import akka.persistence.{ PersistentActor, Recovery }
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.scaladsl.Sink
-import com.github.dnvriend.stream.activemq._
 
-object AckJournalSink {
+object JournalSink {
   def empty(a: Any): Set[String] = Set.empty[String]
-  def apply[A](journalName: String, tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
-    Sink.actorSubscriber[AckTup[A]](Props(new AckJournalActorSubscriber[A](journalName, tags, journalPluginId)))
+  def apply[A](journalName: String, tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[A, ActorRef] =
+    Sink.actorSubscriber[A](Props(new JournalActorSubscriber[A](journalName, tags, journalPluginId)))
 }
 
-private[persistence] class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
+private[persistence] class JournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none // disable recovery of both events and snapshots
   override val persistenceId: String = journalName
 
   override def receiveRecover: Receive = PartialFunction.empty
 
-  private var previousMessage: AckTup[A] = _
-  private def promise = previousMessage._1
-  private def payload = previousMessage._2
-
   override def receiveCommand: Receive = LoggingReceive {
     case OnNext(msg) ⇒
-      previousMessage = msg.asInstanceOf[AckTup[A]]
-      val evaluatedTags = tags(payload)
-      val msgToPersist = if (evaluatedTags.isEmpty) payload else Tagged(payload, evaluatedTags)
-      persist(msgToPersist) { _ ⇒
-        if (!promise.isCompleted) promise.success(())
-        request(1)
-      }
+      val evaluatedTags = tags(msg)
+      val msgToPersist = if (evaluatedTags.isEmpty) msg else Tagged(msg, evaluatedTags)
+      persist(msgToPersist)(_ ⇒ request(1))
+
     case OnComplete ⇒
       log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      if (!promise.isCompleted) promise.success(())
       context.stop(self)
 
     case OnError(cause) ⇒
       log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
-      if (!promise.isCompleted) promise.failure(cause)
       context.stop(self)
-  }
-
-  override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
-    log.error(cause, "AckJournalSync, persist failure for event: {} and sequenceNr: {}", event, seqNr)
-    if (!promise.isCompleted) promise.failure(cause)
-  }
-
-  override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
-    log.error(cause, "AckJournalSync, persist rejected for event: {} and sequenceNr: {}", event, seqNr)
-    if (!promise.isCompleted) promise.failure(cause)
   }
 }

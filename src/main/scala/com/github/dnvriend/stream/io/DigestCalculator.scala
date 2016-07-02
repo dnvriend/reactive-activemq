@@ -50,7 +50,7 @@ object DigestCalculator {
     flow(algorithm).toMat(Sink.head)(Keep.right)
 }
 
-class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteString, ByteString]] {
+private[io] class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteString, ByteString]] {
   val in: Inlet[ByteString] = Inlet("DigestCalculator.in")
   val out: Outlet[ByteString] = Outlet("DigestCalculator.out")
   override val shape: FlowShape[Digest, Digest] = FlowShape.of(in, out)
@@ -78,37 +78,3 @@ class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteSt
     })
   }
 }
-
-//class DigestCalculator(algorithm: Algorithm) extends GraphStageWithMaterializedValue[SinkShape[ByteString], Future[DigestResult]] {
-//  val in: Inlet[ByteString] = Inlet("DigestCalculator.in")
-//  override val shape: SinkShape[ByteString] = SinkShape(in)
-//
-//  override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[DigestResult]) = {
-//    val promise = Promise[DigestResult]
-//    val logic = new GraphStageLogic(shape) {
-//      val m = java.security.MessageDigest.getInstance(algorithm.code)
-//
-//      setHandler(in, new InHandler {
-//        @scala.throws[Exception](classOf[Exception])
-//        override def onPush(): Unit = {
-//          pull(in)
-//          val chunk = grab(in)
-//          m.update(chunk.toArray)
-//        }
-//
-//        @scala.throws[Exception](classOf[Exception])
-//        override def onUpstreamFinish(): Unit = {
-//          promise.success(DigestResult(ByteString(m.digest()), Success(Done)))
-//          super.onUpstreamFinish()
-//        }
-//
-//        @scala.throws[Exception](classOf[Exception])
-//        override def onUpstreamFailure(ex: Throwable): Unit = {
-//          promise.failure(ex)
-//          super.onUpstreamFailure(ex)
-//        }
-//      })
-//    }
-//    (logic, promise.future)
-//  }
-//}

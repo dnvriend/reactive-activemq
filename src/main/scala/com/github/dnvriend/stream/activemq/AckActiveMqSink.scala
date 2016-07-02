@@ -27,16 +27,16 @@ import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
 import scala.collection.JavaConversions._
 import scala.concurrent.{ ExecutionContext, Future }
 
-object ActiveMqSink {
-  def apply[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] = {
+object AckActiveMqSink {
+  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] = {
     val template = CamelExtension(system).template
-    Flow[T].mapAsync(qos) {
-      case payload ⇒
+    Flow[AckTup[A]].mapAsync(qos) {
+      case (p, payload) ⇒
         Future {
           val camelMessage = builder.build(payload)
           val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
           template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
-        }
+        }.map { _ ⇒ if (!p.isCompleted) p.success(()) }.recover { case cause: Throwable ⇒ if (!p.isCompleted) p.failure(cause) }
     }.toMat(Sink.ignore)(Keep.right)
   }
 }

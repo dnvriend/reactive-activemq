@@ -14,8 +14,23 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
 
-object ResumableQuerySource {
+import akka.camel.CamelMessage
+import spray.json.JsonReader
 
+trait MessageExtractor[IN, OUT] {
+  def extract(in: IN): OUT
 }
+
+trait JsonMessageExtractor {
+  implicit def jsonMessageExtractor[A: JsonReader] = new MessageExtractor[CamelMessage, A] {
+    import spray.json._
+    override def extract(in: CamelMessage): A = {
+      val jsonStr = in.body.asInstanceOf[String]
+      jsonStr.parseJson.convertTo[A]
+    }
+  }
+}
+
+object JsonMessageExtractor extends JsonMessageExtractor

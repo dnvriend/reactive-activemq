@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.camel
+package com.github.dnvriend.stream
+package camel
 
 import akka.actor.{ ActorLogging, Props }
 import akka.camel.{ CamelMessage, Producer }

@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package activemq
 
 import akka.Done
 import akka.actor.ActorSystem
 import akka.camel.{ CamelExtension, CamelMessage }
 import akka.stream.scaladsl.{ Flow, Keep, Sink }
+import com.github.dnvriend.stream.MessageBuilder
 import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
-import com.github.dnvriend.stream.camel.MessageBuilder
 
 import scala.collection.JavaConversions._
 import scala.concurrent.{ ExecutionContext, Future }

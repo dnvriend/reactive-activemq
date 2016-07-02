@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.camel
+package com.github.dnvriend.stream
+package camel
 
 import akka.actor.{ ActorLogging, ActorRef, Props }
 import akka.camel.{ CamelMessage, Consumer }
@@ -22,7 +23,6 @@ import akka.event.LoggingReceive
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.scaladsl.Source
-import com.github.dnvriend.stream.activemq.AckRefTup
 
 class CamelActorPublisher(val endpointUri: String) extends Consumer with ActorPublisher[(ActorRef, CamelMessage)] with ActorLogging {
   override val autoAck: Boolean = false

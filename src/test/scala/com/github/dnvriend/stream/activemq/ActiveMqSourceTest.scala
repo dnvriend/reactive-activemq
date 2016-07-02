@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
-
-import com.github.dnvriend.stream.TestSpec
+package com.github.dnvriend.stream
+package activemq
 
 import scala.concurrent.Promise
 

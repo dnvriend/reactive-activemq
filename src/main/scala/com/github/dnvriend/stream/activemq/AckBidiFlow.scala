@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package activemq
 
 import akka.actor.ActorSystem
 import akka.camel.CamelMessage
@@ -22,7 +23,6 @@ import akka.stream._
 import akka.stream.scaladsl.{ BidiFlow, Flow, GraphDSL, Keep }
 import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
 import akka.{ Done, NotUsed }
-import com.github.dnvriend.stream.camel.{ MessageBuilder, MessageExtractor }
 
 import scala.collection.immutable.Queue
 import scala.concurrent.{ ExecutionContext, Future }

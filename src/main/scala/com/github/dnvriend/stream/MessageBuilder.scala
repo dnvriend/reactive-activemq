@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.camel
+package com.github.dnvriend.stream
 
 import akka.camel.CamelMessage
-import spray.json.JsonReader
+import spray.json.JsonWriter
 
-trait MessageExtractor[IN, OUT] {
-  def extract(in: IN): OUT
+trait MessageBuilder[A, B] {
+  def build(a: A): B
 }
 
-trait JsonMessageExtractor {
-  implicit def jsonMessageExtractor[A: JsonReader] = new MessageExtractor[CamelMessage, A] {
-    import spray.json._
-    override def extract(in: CamelMessage): A = {
-      val jsonStr = in.body.asInstanceOf[String]
-      jsonStr.parseJson.convertTo[A]
-    }
+object MessageBuilder {
+  implicit val NoHeadersStringMessageBuilder = new MessageBuilder[String, CamelMessage] {
+    override def build(body: String): CamelMessage =
+      CamelMessage(body, Map.empty)
   }
 }
 
-object JsonMessageExtractor extends JsonMessageExtractor
+trait JsonMessageBuilder {
+  implicit def jsonMessageBuilder[A: JsonWriter] = new MessageBuilder[A, CamelMessage] {
+    import spray.json._
+    override def build(a: A): CamelMessage =
+      implicitly[MessageBuilder[String, CamelMessage]].build(a.toJson.compactPrint)
+  }
+}
+
+object JsonMessageBuilder extends JsonMessageBuilder

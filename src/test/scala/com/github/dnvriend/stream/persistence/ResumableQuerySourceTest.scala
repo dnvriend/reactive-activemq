@@ -14,16 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
-
-import akka.NotUsed
-import akka.actor.ActorRef
-import akka.persistence.query.EventEnvelope
-import akka.stream.scaladsl.{ Keep, Source }
-import akka.testkit.TestProbe
-import com.github.dnvriend.stream.TestSpec
-
-import scala.concurrent.duration._
+package com.github.dnvriend.stream
+package persistence
 
 class ResumableQuerySourceTest extends TestSpec {
 

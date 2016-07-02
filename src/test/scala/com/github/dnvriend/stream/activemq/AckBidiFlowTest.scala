@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package activemq
 
 import akka.Done
 import akka.stream.FlowShape
@@ -23,9 +24,8 @@ import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.testkit.TestProbe
 import com.github.dnvriend.stream.PersonDomain.Person
-import com.github.dnvriend.stream.TestSpec
-import com.github.dnvriend.stream.camel.JsonMessageBuilder._
-import com.github.dnvriend.stream.camel.JsonMessageExtractor._
+import com.github.dnvriend.stream.JsonMessageBuilder._
+import com.github.dnvriend.stream.JsonMessageExtractor._
 
 import scala.concurrent.{ Future, Promise }
 

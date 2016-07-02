@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend
+package com.github.dnvriend.stream
+package persistence
 
-package object stream {
-  type Seq[A] = scala.collection.immutable.Seq[A]
+import akka.persistence.PersistentActor
+import akka.stream.actor.{ ActorSubscriber, RequestStrategy }
+
+class ResumableQuerySink extends PersistentActor with ActorSubscriber {
+
+  override protected def requestStrategy: RequestStrategy = ???
+
+  override def receiveRecover: Receive = ???
+
+  override def receiveCommand: Receive = ???
+
+  override def persistenceId: String = ???
 }

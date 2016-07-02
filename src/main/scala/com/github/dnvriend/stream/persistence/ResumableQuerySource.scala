@@ -15,11 +15,8 @@
  */
 
 package com.github.dnvriend.stream
+package persistence
 
-import akka.actor.ActorRef
+object ResumableQuerySource {
 
-package object activemq {
-  import scala.concurrent.Promise
-  type AckTup[A] = (Promise[Unit], A)
-  type AckRefTup[A] = (ActorRef, A)
 }

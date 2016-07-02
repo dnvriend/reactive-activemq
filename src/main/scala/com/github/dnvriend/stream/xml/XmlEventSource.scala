@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.xml
+package com.github.dnvriend.stream
+package xml
 
 import java.io.{ BufferedInputStream, File, FileInputStream, InputStream }
 

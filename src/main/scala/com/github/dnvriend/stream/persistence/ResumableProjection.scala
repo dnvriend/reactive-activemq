@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package persistence
 
 import akka.actor.ActorSystem
 import akka.event.{ LoggingAdapter, LoggingReceive }
@@ -24,7 +25,6 @@ import akka.persistence.{ PersistentActor, RecoveryCompleted, SnapshotOffer }
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.{ Done, NotUsed }
-import com.github.dnvriend.stream.activemq.ResumableProjection.JournalQueries
 
 import scala.concurrent.{ ExecutionContext, Future }
 

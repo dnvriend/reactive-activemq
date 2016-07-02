@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package persistence
 
 import akka.actor.{ ActorLogging, ActorRef, Props }
 import akka.event.LoggingReceive
@@ -23,6 +24,7 @@ import akka.persistence.{ PersistentActor, Recovery }
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.scaladsl.Sink
+import com.github.dnvriend.stream.activemq._
 
 class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy

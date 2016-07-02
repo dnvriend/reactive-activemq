@@ -27,9 +27,9 @@ import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
+import com.github.dnvriend.stream.JsonMessageBuilder._
+import com.github.dnvriend.stream.JsonMessageExtractor._
 import com.github.dnvriend.stream.activemq._
-import com.github.dnvriend.stream.camel.JsonMessageBuilder._
-import com.github.dnvriend.stream.camel.JsonMessageExtractor._
 import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }

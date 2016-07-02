@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package activemq
 
 import akka.stream.scaladsl.Source
 import com.github.dnvriend.stream.PersonDomain._
-import com.github.dnvriend.stream.camel.JsonMessageBuilder._
-import com.github.dnvriend.stream.camel.JsonMessageExtractor._
-import com.github.dnvriend.stream.camel.{ JsonMessageBuilder, JsonMessageExtractor }
-import com.github.dnvriend.stream.{ PersonDomain, TestSpec }
+import com.github.dnvriend.stream.JsonMessageExtractor._
+import com.github.dnvriend.stream.JsonMessageBuilder._
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -63,25 +62,21 @@ class ActiveMqSinkTest extends TestSpec {
 
   it should "send 250 messages to the queue" in {
     import JsonMessageBuilder._
-    import JsonMessageExtractor._
     import PersonDomain._
     val numberOfPersons = 250
     Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
   }
 
   it should "send and receive 250 messages from the queue" in {
-    import JsonMessageBuilder._
-    import JsonMessageExtractor._
-    import PersonDomain._
     val numberOfPersons = 250
-    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
+    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink[Person]("PersonProducer")).toTry should be a 'success
     ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
   }
 
   it should "copy messages from queue and put on topic" in {
-    Source.repeat(testPerson1).take(10).runWith(ActiveMqSink("PersonProducer"))
+    Source.repeat(testPerson1).take(10).runWith(ActiveMqSink[Person]("PersonProducer"))
     eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.Person").value shouldBe 10)
-    ActiveMqSource[Person]("PersonConsumer").take(10).runWith(AckActiveMqSink("PersonCopyProducer")).futureValue
+    ActiveMqSource[Person]("PersonConsumer").take(10).runWith(AckActiveMqSink[Person]("PersonCopyProducer")).futureValue
     //    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.PersonCopy").value shouldBe 10)
   }
 }

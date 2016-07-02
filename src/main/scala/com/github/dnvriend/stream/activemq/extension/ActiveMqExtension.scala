@@ -23,23 +23,11 @@ import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
 
-case class ActiveMqConfig(
-  host: String = "boot2docker",
-  port: String = "amq",
-  user: String = "amq",
-  pass: String = "amq"
-)
+case class ActiveMqConfig(host: String, port: String, user: String, pass: String)
 
-case class ConsumerConfig(
-  conn: String = "activemq",
-  queue: String = "test",
-  concurrentConsumers: String = "1"
-)
+case class ConsumerConfig(conn: String, queue: String, concurrentConsumers: String)
 
-case class ProducerConfig(
-  conn: String = "activemq",
-  topic: String = "test"
-)
+case class ProducerConfig(conn: String, topic: String)
 
 object ActiveMqExtension extends ExtensionId[ActiveMqExtensionImpl] with ExtensionIdProvider {
   override def createExtension(system: ExtendedActorSystem): ActiveMqExtensionImpl = new ActiveMqExtensionImpl(system)

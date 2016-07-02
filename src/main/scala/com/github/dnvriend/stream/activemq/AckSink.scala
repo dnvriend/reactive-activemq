@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.activemq
+package com.github.dnvriend.stream
+package activemq
 
 import akka.Done
 import akka.stream.scaladsl.{ Flow, Keep, Sink }

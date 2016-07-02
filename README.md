@@ -339,6 +339,9 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 - [op-rabbit][op-rabbit]
 
 # Whats new?
+- v0.0.7 (2016-07-02)
+  - Added `com.github.dnvriend.stream.io.DigestCalculator`, a flow that can calculate digest based on Source[ByteString, NotUsed], supports MD2, MD5, SHA-1, SHA-256, SHA-384 and SHA-512.
+
 - v0.0.6 (2016-07-01)
   - Merged PR #2 [Merlijn Boogerd][mboogerd] - Added component `AckBidiFlow`, thanks!
   - Added `AckBidiFlow`, which is a naive implementation of a bidirectional flow from/to ActiveMq; it assumes:

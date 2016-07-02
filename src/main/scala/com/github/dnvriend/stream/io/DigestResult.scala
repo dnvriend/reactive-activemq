@@ -18,7 +18,8 @@ package com.github.dnvriend.stream
 package io
 
 import akka.Done
+import akka.util.ByteString
 
 import scala.util.Try
 
-final case class DigestResult(messageDigest: Digest, status: Try[Done])
+final case class DigestResult(messageDigest: ByteString, status: Try[Done])

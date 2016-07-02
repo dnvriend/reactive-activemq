@@ -115,7 +115,7 @@ trait TestSpec extends FlatSpec
 
   override protected def beforeEach(): Unit = {
     purgeQueues()
-    //    clearTables()
+    clearTables()
   }
 
   override protected def afterAll(): Unit = {

@@ -20,9 +20,11 @@ package persistence
 import akka.Done
 import akka.persistence.query.EventEnvelope
 import akka.stream.scaladsl.{ Flow, Source }
+import org.scalatest.Ignore
 
 import scala.concurrent.Future
 
+@Ignore
 class ResumableQuerySourceTest extends TestSpec {
 
   def withQueryFromOffset(f: Flow[EventEnvelope, EventEnvelope, Future[Done]] ⇒ Unit): Unit = {
@@ -30,8 +32,8 @@ class ResumableQuerySourceTest extends TestSpec {
   }
 
   it should "resume from the last offset" in {
-    //    Source.fromIterator(() ⇒ Iterator from 0).runWith(JournalSink("NumberJournal"))
-    //        eventually(countJournal("NumberJournal").futureValue shouldBe 10)
+    Source.fromIterator(() ⇒ Iterator from 0).take(10).runWith(JournalSink("NumberJournal"))
+    //    eventually(countJournal("NumberJournal").futureValue shouldBe 10)
 
     withQueryFromOffset { flow ⇒
       flow.join(Flow[EventEnvelope].map { e ⇒ println(e); e }).run().futureValue

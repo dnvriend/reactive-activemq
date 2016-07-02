@@ -19,16 +19,16 @@ package persistence
 
 import akka.actor.{ ActorLogging, ActorSystem, Props }
 import akka.event.LoggingReceive
-import akka.{ Done, NotUsed }
+import akka.persistence.query.EventEnvelope
 import akka.persistence.{ PersistentActor, Recovery, RecoveryCompleted, SnapshotOffer }
-import akka.persistence.query.{ EventEnvelope, PersistenceQuery }
 import akka.stream._
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorPublisher, ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
-import akka.stream.scaladsl.{ Broadcast, Flow, GraphDSL, Keep, Sink, Source }
+import akka.stream.scaladsl.{ Broadcast, Flow, GraphDSL, Sink, Source }
 import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
-import com.github.dnvriend.stream.persistence.ResumableQueryPublisher.Latestoffset
+import akka.{ Done, NotUsed }
+import com.github.dnvriend.stream.persistence.ResumableQueryPublisher.LatestOffset
 
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -36,7 +36,6 @@ object ResumableQuery {
   def apply(
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
-    take: Long = Long.MaxValue,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
   )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[EventEnvelope, EventEnvelope, Future[Done]] = {
@@ -48,7 +47,7 @@ object ResumableQuery {
       val bcast = b.add(new Broadcast[EventEnvelope](2, false))
       val bidi = b.add(new ResumableQueryBidiFlow)
       source ~> bidi.in1
-      bidi.out2 ~> Flow[EventEnvelope].take(take) ~> bcast.in
+      bidi.out2 ~> bcast.in
       bcast ~> sink
       bcast ~> ignore
       FlowShape(bidi.in2, bidi.out1)
@@ -66,7 +65,6 @@ private[persistence] class ResumableQueryBidiFlow extends GraphStage[BidiShape[E
     BidiShape.of(in1, out1, in2, out2)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-
     setHandler(in1, new InHandler {
       override def onPush(): Unit = {
         push(out1, grab(in1))
@@ -94,24 +92,16 @@ private[persistence] class ResumableQueryBidiFlow extends GraphStage[BidiShape[E
 }
 
 object ResumableQueryPublisher {
-  final case class Latestoffset(offset: Long)
+  final case class LatestOffset(offset: Long)
 }
 
 private[persistence] class ResumableQueryPublisher(queryName: String, query: Long ⇒ Source[EventEnvelope, NotUsed], override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorPublisher[EventEnvelope] with DeliveryBuffer[EventEnvelope] with ActorLogging {
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
-
   override val receiveRecover: Receive = LoggingReceive {
-    case SnapshotOffer(_, offset: Long) ⇒
-      log.debug(s"[pub]: recover from snapshot: $offset")
-      latestOffset = offset
-    case Latestoffset(offset) ⇒
-      log.debug(s"[pub]: recover from event: $offset")
-      latestOffset = offset
-
-    case RecoveryCompleted ⇒
-      log.debug(s"[pub] ===> Recovered to latestSeqNr: $lastSequenceNr and latestOffset: $latestOffset, running query")
-      query(latestOffset).runForeach(self ! _)
+    case SnapshotOffer(_, offset: Long) ⇒ latestOffset = offset
+    case LatestOffset(offset)           ⇒ latestOffset = offset
+    case RecoveryCompleted              ⇒ query(latestOffset).runForeach(self ! _)
   }
 
   override val receiveCommand: Receive = LoggingReceive {
@@ -122,7 +112,8 @@ private[persistence] class ResumableQueryPublisher(queryName: String, query: Lon
   }
 }
 
-private trait DeliveryBuffer[T] { _: ActorPublisher[T] ⇒
+private[persistence] trait DeliveryBuffer[T] {
+  _: ActorPublisher[T] ⇒
 
   var buf = Vector.empty[T]
 
@@ -145,24 +136,14 @@ private trait DeliveryBuffer[T] { _: ActorPublisher[T] ⇒
 
 private[persistence] class ResumableQuerySubscriber(queryName: String, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorSubscriber with ActorLogging {
   override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
-  override val recovery: Recovery = Recovery.none // disable recovery of both events and snapshots
+  override val recovery: Recovery = Recovery.none
   override val persistenceId: String = queryName
   override val receiveRecover: Receive = PartialFunction.empty
 
   override val receiveCommand: Receive = LoggingReceive {
     case OnNext(EventEnvelope(offset, _, _, _)) ⇒
-      log.debug(s"[sub] ===> Persisting $offset")
-      persist(ResumableQueryPublisher.Latestoffset(offset)) { msg ⇒
-        log.debug(s"$msg Persisted")
-      }
-      request(1)
-
-    case OnComplete ⇒
-      println("Receiving onComplete, stopping AckJournalSink for query: {} using journalPluginId: {}", queryName, journalPluginId)
-
-    case OnError(cause) ⇒
-      println(cause, "Receiving onError, stopping AckJournalSink for query: {} using journalPluginId: {}", queryName, journalPluginId)
-
-    case msg ⇒ println(msg)
+      persist(ResumableQueryPublisher.LatestOffset(offset))(_ ⇒ request(1))
+    case OnComplete     ⇒ context stop self
+    case OnError(cause) ⇒ context stop self
   }
 }

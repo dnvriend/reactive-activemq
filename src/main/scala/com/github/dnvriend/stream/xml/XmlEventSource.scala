@@ -35,6 +35,6 @@ object XMLEventSource {
   def fromFileName(name: String): Source[XMLEvent, NotUsed] =
     fromInputStream(new BufferedInputStream(new FileInputStream(name)))
 
-  def validation(xsdOnClasspath: String) = ???
+  def validation(xsd: String) = ???
 
 }

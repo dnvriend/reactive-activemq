@@ -17,13 +17,14 @@
 package com.github.dnvriend.stream
 package io
 
-import akka.NotUsed
+import akka.{ Done, NotUsed }
 import akka.stream._
 import akka.stream.scaladsl.{ Flow, Keep, Sink }
 import akka.stream.stage._
 import akka.util.ByteString
 
 import scala.concurrent.Future
+import scala.util.Success
 
 sealed trait Algorithm
 object Algorithm {
@@ -37,23 +38,23 @@ object Algorithm {
 
 object DigestCalculator {
 
-  def apply(algorithm: Algorithm): Flow[ByteString, ByteString, NotUsed] =
-    Flow.fromGraph[ByteString, ByteString, NotUsed](new DigestCalculator(algorithm))
+  def apply(algorithm: Algorithm): Flow[ByteString, DigestResult, NotUsed] =
+    Flow.fromGraph[ByteString, DigestResult, NotUsed](new DigestCalculator(algorithm))
 
-  def flow(algorithm: Algorithm): Flow[ByteString, ByteString, NotUsed] =
+  def flow(algorithm: Algorithm): Flow[ByteString, DigestResult, NotUsed] =
     apply(algorithm)
 
   def hexString(algorithm: Algorithm): Flow[ByteString, String, NotUsed] =
-    flow(algorithm).map(arr ⇒ arr.toArray.map("%02x".format(_)).mkString).fold("")(_ + _)
+    flow(algorithm).map(res ⇒ res.messageDigest.toArray.map("%02x".format(_)).mkString).fold("")(_ + _)
 
-  def sink(algorithm: Algorithm): Sink[ByteString, Future[ByteString]] =
+  def sink(algorithm: Algorithm): Sink[ByteString, Future[DigestResult]] =
     flow(algorithm).toMat(Sink.head)(Keep.right)
 }
 
-private[io] class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteString, ByteString]] {
+private[io] class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteString, DigestResult]] {
   val in: Inlet[ByteString] = Inlet("DigestCalculator.in")
-  val out: Outlet[ByteString] = Outlet("DigestCalculator.out")
-  override val shape: FlowShape[Digest, Digest] = FlowShape.of(in, out)
+  val out: Outlet[DigestResult] = Outlet("DigestCalculator.out")
+  override val shape: FlowShape[ByteString, DigestResult] = FlowShape.of(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
     val digest = java.security.MessageDigest.getInstance(algorithm.toString)
@@ -72,7 +73,7 @@ private[io] class DigestCalculator(algorithm: Algorithm) extends GraphStage[Flow
       }
 
       override def onUpstreamFinish(): Unit = {
-        emit(out, ByteString(digest.digest()))
+        emit(out, DigestResult(ByteString(digest.digest()), Success(Done)))
         completeStage()
       }
     })

@@ -19,7 +19,7 @@ package io
 
 import akka.{ Done, NotUsed }
 import akka.stream._
-import akka.stream.scaladsl.{ Flow, Keep, Sink }
+import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import akka.stream.stage._
 import akka.util.ByteString
 
@@ -49,6 +49,9 @@ object DigestCalculator {
 
   def sink(algorithm: Algorithm): Sink[ByteString, Future[DigestResult]] =
     flow(algorithm).toMat(Sink.head)(Keep.right)
+
+  def source(algorithm: Algorithm, text: String): Source[String, NotUsed] =
+    Source.single(ByteString(text)).via(hexString(algorithm))
 }
 
 private[io] class DigestCalculator(algorithm: Algorithm) extends GraphStage[FlowShape[ByteString, DigestResult]] {

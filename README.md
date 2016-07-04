@@ -340,6 +340,10 @@ all components to be able to acknowledge messages from the `Sink` up to the `Sou
 - [op-rabbit][op-rabbit]
 
 # Whats new?
+- v0.0.8 (2016-07-04)
+  - Added `com.github.dnvriend.stream.xml.Validation`, a component that can validate a XML document against a XSD
+  - Added `com.github.dnvriend.stream.persistence.ResumableQuery`, a component that can resume a stopped persistence-query
+
 - v0.0.7 (2016-07-02)
   - Added `com.github.dnvriend.stream.io.DigestCalculator`, a flow that can calculate digest based on Source[ByteString, NotUsed], supports MD2, MD5, SHA-1, SHA-256, SHA-384 and SHA-512.
 

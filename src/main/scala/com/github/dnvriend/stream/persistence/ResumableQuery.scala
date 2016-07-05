@@ -36,11 +36,12 @@ object ResumableQuery {
   def apply(
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
+    snapshotInterval: Option[Long] = None,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
   )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[EventEnvelope, EventEnvelope, Future[Done]] = {
     val resumableQuerySource = Source.actorPublisher[EventEnvelope](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
-    val resumableQuerySink = Sink.actorSubscriber[EventEnvelope](Props(new ResumableQuerySubscriber(queryName, journalPluginId, snapshotPluginId)))
+    val resumableQuerySink = Sink.actorSubscriber[EventEnvelope](Props(new ResumableQuerySubscriber(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
     val ignoreSink = Sink.ignore
     Flow.fromGraph(GraphDSL.create(resumableQuerySource, resumableQuerySink, ignoreSink)((_, _, ig) ⇒ ig) { implicit b ⇒ (source, sink, ignore) ⇒
       import GraphDSL.Implicits._
@@ -98,7 +99,7 @@ object ResumableQueryPublisher {
 private[persistence] class ResumableQueryPublisher(queryName: String, query: Long ⇒ Source[EventEnvelope, NotUsed], override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorPublisher[EventEnvelope] with DeliveryBuffer[EventEnvelope] with ActorLogging {
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
-  override val receiveRecover: Receive = LoggingReceive {
+  override val receiveRecover: Receive = {
     case SnapshotOffer(_, offset: Long) ⇒ latestOffset = offset
     case LatestOffset(offset)           ⇒ latestOffset = offset
     case RecoveryCompleted              ⇒ query(latestOffset).runForeach(self ! _)
@@ -134,7 +135,7 @@ private[persistence] trait DeliveryBuffer[T] {
     }
 }
 
-private[persistence] class ResumableQuerySubscriber(queryName: String, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorSubscriber with ActorLogging {
+private[persistence] class ResumableQuerySubscriber(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorSubscriber with ActorLogging {
   override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none
   override val persistenceId: String = queryName
@@ -142,7 +143,13 @@ private[persistence] class ResumableQuerySubscriber(queryName: String, override 
 
   override val receiveCommand: Receive = LoggingReceive {
     case OnNext(EventEnvelope(offset, _, _, _)) ⇒
-      persist(ResumableQueryPublisher.LatestOffset(offset))(_ ⇒ request(1))
+      persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
+        snapshotInterval.foreach { interval ⇒
+          if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
+            saveSnapshot(ResumableQueryPublisher.LatestOffset(offset))
+        }
+        request(1)
+      }
     case OnComplete     ⇒ context stop self
     case OnError(cause) ⇒ context stop self
   }

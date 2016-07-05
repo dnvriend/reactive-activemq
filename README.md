@@ -22,6 +22,14 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.9"
 ```
 
 # Whats new?
+- v0.0.11 (2016-07-05)
+  - The Journal and AckJournal do not need a name, they exist only to optionally tag events and store messages in
+    the journal to be used by `EventsByTagQuery` and `CurrentEventsByTagQuery` akka-persistence-query API.
+  - Snapshotting for the `com.github.dnvriend.stream.persistence.ResumableQuery`.
+
+- v0.0.10 (2016-07-05)
+  - Changed the interface of the Journal and AckJournal
+
 - v0.0.9 (2016-07-05)
   - Refactored the ActiveMq API to become more friendly and intuitive.
   - Todo: documentation and API docs

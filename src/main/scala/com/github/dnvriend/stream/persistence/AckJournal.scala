@@ -17,6 +17,8 @@
 package com.github.dnvriend.stream
 package persistence
 
+import java.util.UUID
+
 import akka.actor.{ ActorLogging, ActorRef, Props }
 import akka.event.LoggingReceive
 import akka.persistence.journal.Tagged
@@ -25,20 +27,38 @@ import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.scaladsl.Sink
 
+/**
+ * An [[com.github.dnvriend.stream.persistence.AckJournal]] is responsible for writing optionally tagged messages into the akka-persistence-journal
+ * and ack-ing each message.
+ *
+ * Each message should be tagged by the [[com.github.dnvriend.stream.persistence.Journal]] component or using an [[akka.persistence.journal.EventAdapter]]
+ * before any of the messages can be queried by [[akka.persistence.query.scaladsl.EventsByTagQuery]] or
+ * [[akka.persistence.query.scaladsl.CurrentEventsByTagQuery]].
+ *
+ * Because the component is not an entity, it's name/persistence id is not relevant.
+ * To be compliant with akka-persistence, each message will be stored in context of
+ * a random ID prefixed with `JournalWriter-`.
+ */
 object AckJournal {
-  def empty(a: Any): Set[String] = Set.empty[String]
+  private def empty(a: Any): Set[String] = Set.empty[String]
 
-  def apply[A](journalName: String, tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
-    sink(journalName, tags, journalPluginId)
+  /**
+   * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal and acks each message.
+   */
+  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
+    sink(tags, journalPluginId)
 
-  def sink[A](journalName: String, tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
-    Sink.actorSubscriber[AckTup[A]](Props(new AckJournalActorSubscriber[A](journalName, tags, journalPluginId)))
+  /**
+   * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal and acks each message.
+   */
+  def sink[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
+    Sink.actorSubscriber[AckTup[A]](Props(new AckJournalActorSubscriber[A](tags, journalPluginId)))
 }
 
-private[persistence] class AckJournalActorSubscriber[A](journalName: String, tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
+private[persistence] class AckJournalActorSubscriber[A](tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none // disable recovery of both events and snapshots
-  override val persistenceId: String = journalName
+  override val persistenceId: String = "JournalWriter-" + UUID.randomUUID().toString
 
   override def receiveRecover: Receive = PartialFunction.empty
 
@@ -56,12 +76,12 @@ private[persistence] class AckJournalActorSubscriber[A](journalName: String, tag
         request(1)
       }
     case OnComplete ⇒
-      log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
+      log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalPluginId)
       if (!promise.isCompleted) promise.success(())
       context.stop(self)
 
     case OnError(cause) ⇒
-      log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalName, journalPluginId)
+      log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalPluginId)
       if (!promise.isCompleted) promise.failure(cause)
       context.stop(self)
   }

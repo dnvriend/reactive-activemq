@@ -32,7 +32,7 @@ class ResumableQuerySourceTest extends TestSpec {
   }
 
   it should "resume from the last offset" in {
-    Source.fromIterator(() ⇒ Iterator from 0).take(10).runWith(JournalSink("NumberJournal"))
+    Source.fromIterator(() ⇒ Iterator from 0).take(10).runWith(Journal("NumberJournal"))
     //    eventually(countJournal("NumberJournal").futureValue shouldBe 10)
 
     withQueryFromOffset { flow ⇒

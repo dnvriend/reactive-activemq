@@ -21,14 +21,19 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.camel.{ CamelExtension, CamelMessage }
 import akka.stream.scaladsl.{ Flow, Keep, Sink }
-import com.github.dnvriend.stream.MessageBuilder._
 import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
 
 import scala.collection.JavaConversions._
 import scala.concurrent.{ ExecutionContext, Future }
 
-object AckActiveMqSink {
-  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] = {
+object AckActiveMqProducer {
+  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] =
+    sink(producerName, qos)
+
+  def sink[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] =
+    flow(producerName, qos).toMat(Sink.ignore)(Keep.right)
+
+  def flow[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]) = {
     val template = CamelExtension(system).template
     Flow[AckTup[A]].mapAsync(qos) {
       case (p, payload) ⇒
@@ -37,6 +42,6 @@ object AckActiveMqSink {
           val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
           template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
         }.map { _ ⇒ if (!p.isCompleted) p.success(()) }.recover { case cause: Throwable ⇒ if (!p.isCompleted) p.failure(cause) }
-    }.toMat(Sink.ignore)(Keep.right)
+    }
   }
 }

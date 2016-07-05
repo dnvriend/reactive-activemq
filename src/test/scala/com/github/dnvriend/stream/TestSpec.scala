@@ -91,10 +91,10 @@ trait TestSpec extends FlatSpec
   }
 
   def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
-    f(TestSource.probe[Person].to(ActiveMqSink[Person](endpoint)).run())
+    f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
 
   def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
-    f(ActiveMqSource[Person](endpoint).runWith(TestSink.probe[AckTup[Person]](system)))
+    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckTup[Person]](system)))
 
   def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] ⇒ Unit): Unit =
     withInputStream(filename) { is ⇒

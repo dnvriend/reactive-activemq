@@ -19,7 +19,7 @@ package activemq
 
 import scala.concurrent.Promise
 
-class ActiveMqSourceTest extends TestSpec {
+class ActiveMqProducerSourceTest extends TestSpec {
   it should "consume messages from the queue" in {
     withTestTopicSubscriber() { sub ⇒
       withTestTopicPublisher() { pub ⇒

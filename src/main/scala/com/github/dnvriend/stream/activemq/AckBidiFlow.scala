@@ -58,8 +58,8 @@ object AckBidiFlow {
     extractor: MessageExtractor[CamelMessage, S],
     builder: MessageBuilder[T, CamelMessage]): Flow[T, S, Future[Done]] = {
 
-    val amqSource = ActiveMqSource.apply(consumerName)
-    val amqSink = AckActiveMqSink.apply(producerName, qos)
+    val amqSource = ActiveMqConsumer(consumerName)
+    val amqSink = AckActiveMqProducer(producerName, qos)
 
     Flow.fromGraph(GraphDSL.create(amqSource, amqSink)(Keep.right) { implicit b ⇒ (source, sink) ⇒
       import GraphDSL.Implicits._

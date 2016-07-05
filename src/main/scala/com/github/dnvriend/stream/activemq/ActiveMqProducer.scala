@@ -17,18 +17,21 @@
 package com.github.dnvriend.stream
 package activemq
 
-import akka.Done
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.camel.{ CamelExtension, CamelMessage }
-import akka.stream.scaladsl.{ Flow, Keep, Sink }
-import com.github.dnvriend.stream.MessageBuilder._
+import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
+import akka.{ Done, NotUsed }
 import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
+import com.github.dnvriend.stream.camel.CamelActorPublisher
 
 import scala.collection.JavaConversions._
 import scala.concurrent.{ ExecutionContext, Future }
 
-object ActiveMqSink {
-  def apply[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] = {
+object ActiveMqProducer {
+  /**
+   * Creates a flow that produces messages to a configured ActiveMq producer until upstream terminates.
+   */
+  def flow[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Flow[T, T, NotUsed] = {
     val template = CamelExtension(system).template
     Flow[T].mapAsync(qos) {
       case payload ⇒
@@ -36,7 +39,20 @@ object ActiveMqSink {
           val camelMessage = builder.build(payload)
           val uri = ActiveMqExtension(system).producerEndpointUri(producerName)
           template.sendBodyAndHeaders(uri, camelMessage.body, camelMessage.headers.mapValues(_.asInstanceOf[AnyRef]))
+          payload
         }
-    }.toMat(Sink.ignore)(Keep.right)
+    }
   }
+
+  /**
+   * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
+   */
+  def sink[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] =
+    flow(producerName, qos).toMat(Sink.ignore)(Keep.right)
+
+  /**
+   * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
+   */
+  def apply[T](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[T, CamelMessage]): Sink[T, Future[Done]] =
+    sink(producerName, qos)
 }

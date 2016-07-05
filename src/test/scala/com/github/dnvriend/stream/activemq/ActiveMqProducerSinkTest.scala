@@ -25,7 +25,7 @@ import com.github.dnvriend.stream.JsonMessageBuilder._
 import scala.concurrent.Promise
 import scala.concurrent.duration._
 
-class ActiveMqSinkTest extends TestSpec {
+class ActiveMqProducerSinkTest extends TestSpec {
   it should "produce messages to a queue" in {
     withTestTopicSubscriber() { sub ⇒
       withTestTopicPublisher() { pub ⇒
@@ -64,19 +64,19 @@ class ActiveMqSinkTest extends TestSpec {
     import JsonMessageBuilder._
     import PersonDomain._
     val numberOfPersons = 250
-    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink("PersonProducer")).toTry should be a 'success
+    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqProducer("PersonProducer")).toTry should be a 'success
   }
 
   it should "send and receive 250 messages from the queue" in {
     val numberOfPersons = 250
-    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqSink[Person]("PersonProducer")).toTry should be a 'success
-    ActiveMqSource[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
+    Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqProducer[Person]("PersonProducer")).toTry should be a 'success
+    ActiveMqConsumer[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
   }
 
   it should "copy messages from queue and put on topic" in {
-    Source.repeat(testPerson1).take(10).runWith(ActiveMqSink[Person]("PersonProducer"))
+    Source.repeat(testPerson1).take(10).runWith(ActiveMqProducer[Person]("PersonProducer"))
     eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.Person").value shouldBe 10)
-    ActiveMqSource[Person]("PersonConsumer").take(10).runWith(AckActiveMqSink[Person]("PersonCopyProducer")).futureValue
+    ActiveMqConsumer[Person]("PersonConsumer").take(10).runWith(AckActiveMqProducer[Person]("PersonCopyProducer")).futureValue
     //    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.PersonCopy").value shouldBe 10)
   }
 }

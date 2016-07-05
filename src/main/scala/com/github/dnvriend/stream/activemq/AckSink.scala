@@ -20,20 +20,22 @@ package activemq
 import akka.Done
 import akka.stream.scaladsl.{ Flow, Keep, Sink }
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 object AckSink {
   /**
    * A `Sink` that acks each message and keeps on collecting incoming elements until upstream terminates.
    */
-  def seq[T]: Sink[AckTup[T], Future[immutable.Seq[T]]] =
-    Flow[AckTup[T]].map {
+  def seq[A]: Sink[AckTup[A], Future[Seq[A]]] =
+    Flow[AckTup[A]].map {
       case (p, a) ⇒
         if (!p.isCompleted) p.success(())
         a
-    }.toMat(Sink.seq[T])(Keep.right)
+    }.toMat(Sink.seq[A])(Keep.right)
 
+  /**
+   * Creates a sink that acks each message and applies the given function with the received element until upstream terminates.
+   */
   def foreach[A](f: A ⇒ Unit): Sink[AckTup[A], Future[Done]] =
     Flow[AckTup[A]].map {
       case (p, a) ⇒

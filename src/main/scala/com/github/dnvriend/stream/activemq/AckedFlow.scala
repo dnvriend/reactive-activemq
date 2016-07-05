@@ -17,20 +17,11 @@
 package com.github.dnvriend.stream
 package activemq
 
-import akka.actor.{ ActorRef, ActorSystem }
-import akka.camel.CamelMessage
+import akka.actor.ActorRef
 import akka.stream._
-import akka.stream.scaladsl.Source
 import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
-import com.github.dnvriend.stream.activemq.extension.ActiveMqExtension
-import com.github.dnvriend.stream.camel.CamelActorPublisher
 
 import scala.concurrent.{ ExecutionContext, Future, Promise }
-
-object ActiveMqSource {
-  def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckTup[A], ActorRef] =
-    CamelActorPublisher.fromEndpointUriWithExtractor[A](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedFlow)
-}
 
 private[activemq] class AckedFlow[A](implicit ec: ExecutionContext) extends GraphStage[FlowShape[(ActorRef, A), AckTup[A]]] {
   val in = Inlet[(ActorRef, A)]("AckedFlow.in")

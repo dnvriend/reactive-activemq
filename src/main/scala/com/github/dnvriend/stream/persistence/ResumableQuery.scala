@@ -146,7 +146,7 @@ private[persistence] class ResumableQuerySubscriber(queryName: String, snapshotI
       persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
         snapshotInterval.foreach { interval ⇒
           if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
-            saveSnapshot(ResumableQueryPublisher.LatestOffset(offset))
+            saveSnapshot(offset)
         }
         request(1)
       }

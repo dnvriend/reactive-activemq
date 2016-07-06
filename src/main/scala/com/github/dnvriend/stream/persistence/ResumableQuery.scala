@@ -36,7 +36,7 @@ object ResumableQuery {
   def apply(
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
-    snapshotInterval: Option[Long] = None,
+    snapshotInterval: Option[Long] = Some(500),
     journalPluginId: String = "",
     snapshotPluginId: String = ""
   )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[EventEnvelope, EventEnvelope, Future[Done]] = {

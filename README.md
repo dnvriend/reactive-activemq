@@ -1,4 +1,4 @@
-# reactive-activemq v0.0.12
+# reactive-activemq v0.0.13
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
 components, the [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume and produce messages with 
 [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
@@ -18,10 +18,13 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.12"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.13"
 ```
 
 # Whats new?
+- v0.0.13 (2016-07-06)
+  - fix bug in snapshotting
+
 - v0.0.12 (2016-07-06)
   - Default snapshot size (500)
 

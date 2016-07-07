@@ -27,15 +27,15 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{ ExecutionContext, Future }
 
 object AckActiveMqProducer {
-  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] =
+  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckUTup[A], Future[Done]] =
     sink(producerName, qos)
 
-  def sink[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckTup[A], Future[Done]] =
+  def sink[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[AckUTup[A], Future[Done]] =
     flow(producerName, qos).toMat(Sink.ignore)(Keep.right)
 
   def flow[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]) = {
     val template = CamelExtension(system).template
-    Flow[AckTup[A]].mapAsync(qos) {
+    Flow[AckUTup[A]].mapAsync(qos) {
       case (p, payload) ⇒
         Future {
           val camelMessage = builder.build(payload)

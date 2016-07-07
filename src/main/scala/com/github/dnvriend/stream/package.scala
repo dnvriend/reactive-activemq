@@ -24,6 +24,7 @@ import scala.concurrent.Promise
 package object stream {
   type JournalQueries = ReadJournal with EventsByPersistenceIdQuery with EventsByTagQuery
   type Seq[A] = scala.collection.immutable.Seq[A]
-  type AckTup[A] = (Promise[Unit], A)
+  type AckTup[A, B] = (Promise[A], B)
+  type AckUTup[B] = (Promise[Unit], B)
   type AckRefTup[A] = (ActorRef, A)
 }

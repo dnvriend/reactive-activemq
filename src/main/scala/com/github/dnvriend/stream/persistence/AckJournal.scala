@@ -45,14 +45,14 @@ object AckJournal {
   /**
    * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal and acks each message.
    */
-  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
+  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckUTup[A], ActorRef] =
     sink(tags, journalPluginId)
 
   /**
    * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal and acks each message.
    */
-  def sink[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckTup[A], ActorRef] =
-    Sink.actorSubscriber[AckTup[A]](Props(new AckJournalActorSubscriber[A](tags, journalPluginId)))
+  def sink[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[AckUTup[A], ActorRef] =
+    Sink.actorSubscriber[AckUTup[A]](Props(new AckJournalActorSubscriber[A](tags, journalPluginId)))
 }
 
 private[persistence] class AckJournalActorSubscriber[A](tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
@@ -62,13 +62,13 @@ private[persistence] class AckJournalActorSubscriber[A](tags: Any ⇒ Set[String
 
   override def receiveRecover: Receive = PartialFunction.empty
 
-  private var previousMessage: AckTup[A] = _
+  private var previousMessage: AckUTup[A] = _
   private def promise = previousMessage._1
   private def payload = previousMessage._2
 
   override def receiveCommand: Receive = LoggingReceive {
     case OnNext(msg) ⇒
-      previousMessage = msg.asInstanceOf[AckTup[A]]
+      previousMessage = msg.asInstanceOf[AckUTup[A]]
       val evaluatedTags = tags(payload)
       val msgToPersist = if (evaluatedTags.isEmpty) payload else Tagged(payload, evaluatedTags)
       persist(msgToPersist) { _ ⇒

@@ -19,29 +19,31 @@ package com.github.dnvriend.stream
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.event.{ Logging, LoggingAdapter }
+import akka.event.{Logging, LoggingAdapter}
 import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
+import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal}
 import akka.stream.scaladsl.Sink
-import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
-import akka.stream.testkit.{ TestPublisher, TestSubscriber }
-import akka.stream.{ ActorMaterializer, Materializer }
+import akka.stream.testkit.scaladsl.{TestSink, TestSource}
+import akka.stream.testkit.{TestPublisher, TestSubscriber}
+import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import com.github.dnvriend.stream.JsonMessageBuilder._
 import com.github.dnvriend.stream.JsonMessageExtractor._
 import com.github.dnvriend.stream.activemq._
-import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
+import com.github.dnvriend.stream.xml.{PersonParser, XMLEventSource}
 import org.scalatest._
-import org.scalatest.concurrent.{ Eventually, ScalaFutures }
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import scala.xml.pull.XMLEvent
 
 object PersonDomain extends DefaultJsonProtocol {
+
   final case class Address(street: String = "", houseNumber: String = "", zipCode: String = "", city: String = "")
+
   final case class Person(firstName: String = "", lastName: String = "", age: Int = 0, address: Address = Address())
 
   implicit val jsonAddressFormat = jsonFormat4(Address)
@@ -49,17 +51,18 @@ object PersonDomain extends DefaultJsonProtocol {
 }
 
 trait TestSpec extends FlatSpec
-    with Matchers
-    with ScalaFutures
-    with BrokerResources
-    with BeforeAndAfterEach
-    with BeforeAndAfterAll
-    with OptionValues
-    with Eventually
-    with DatabaseResources
-    with ClasspathResources {
+  with Matchers
+  with ScalaFutures
+  with BrokerResources
+  with BeforeAndAfterEach
+  with BeforeAndAfterAll
+  with OptionValues
+  with Eventually
+  with DatabaseResources
+  with ClasspathResources {
 
   import PersonDomain._
+
   implicit val system: ActorSystem = ActorSystem()
   implicit val mat: Materializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
@@ -93,8 +96,15 @@ trait TestSpec extends FlatSpec
   def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
 
-  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person]] ⇒ Unit): Unit =
-    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckTup[Person]](system)))
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")
+                             (f: TestSubscriber.Probe[AckUTup[Person]] ⇒ Unit): Unit = {
+    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]](system)))
+  }
+
+  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")
+                                   (f: TestSubscriber.Probe[AckTup[Person, Person]] ⇒ Unit): Unit = {
+    f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
+  }
 
   def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] ⇒ Unit): Unit =
     withInputStream(filename) { is ⇒

@@ -22,12 +22,13 @@ import com.typesafe.config.Config
 import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
+import scalaz.syntax.std.boolean._
 
 case class ActiveMqConfig(host: String, port: String, user: String, pass: String)
 
 case class ConsumerConfig(conn: String, queue: String, concurrentConsumers: String)
 
-case class ProducerConfig(conn: String, topic: String)
+case class ProducerConfig(conn: String, topic: String, replyTo: Option[String])
 
 object ActiveMqExtension extends ExtensionId[ActiveMqExtensionImpl] with ExtensionIdProvider {
   override def createExtension(system: ExtendedActorSystem): ActiveMqExtensionImpl = new ActiveMqExtensionImpl(system)
@@ -73,19 +74,21 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
 
   private def producerConfig(config: Config) = ProducerConfig(
     config.getString("conn"),
-    config.getString("topic")
+    config.getString("topic"),
+    config.hasPath("reply-to").option(config.getString("reply-to"))
   )
 
   override def consumerEndpointUri(consumerName: String): String = {
     val cfg = consumerConfig(system.settings.config.getConfig(consumerName))
     import cfg._
-    s"$conn:queue:Consumer.$consumerName.VirtualTopic.$queue?concurrentConsumers=$concurrentConsumers"
-
+    val destination = s"$conn:queue:Consumer.$consumerName.VirtualTopic.$queue?concurrentConsumers=$concurrentConsumers"
+    destination
   }
 
   override def producerEndpointUri(producerName: String): String = {
     val cfg = producerConfig(system.settings.config.getConfig(producerName))
     import cfg._
-    s"$conn:topic:VirtualTopic.$topic"
+    val maybeReplyTo = replyTo.map(dest ⇒ s"?replyTo=$dest&preserveMessageQos=true").getOrElse("")
+    s"$conn:topic:VirtualTopic.$topic$maybeReplyTo"
   }
 }

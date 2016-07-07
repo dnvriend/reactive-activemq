@@ -17,14 +17,16 @@
 package com.github.dnvriend.stream
 package io
 
-import akka.{ Done, NotUsed }
 import akka.stream._
 import akka.stream.scaladsl.{ Flow, Keep, Sink, Source }
 import akka.stream.stage._
 import akka.util.ByteString
+import akka.{ Done, NotUsed }
 
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.{ Success, Try }
+
+final case class DigestResult(messageDigest: ByteString, status: Try[Done])
 
 sealed trait Algorithm
 object Algorithm {
@@ -36,6 +38,10 @@ object Algorithm {
   case object `SHA-512` extends Algorithm
 }
 
+/**
+ * The DigestCalculator transforms/digests a stream of [[akka.util.ByteString]] to a
+ * [[com.github.dnvriend.stream.io.DigestResult]] according to a given [[com.github.dnvriend.stream.io.Algorithm]]
+ */
 object DigestCalculator {
 
   def apply(algorithm: Algorithm): Flow[ByteString, DigestResult, NotUsed] =
@@ -44,6 +50,9 @@ object DigestCalculator {
   def flow(algorithm: Algorithm): Flow[ByteString, DigestResult, NotUsed] =
     apply(algorithm)
 
+  /**
+   * Returns the String encoded as Hex representation of the digested stream of [[akka.util.ByteString]]
+   */
   def hexString(algorithm: Algorithm): Flow[ByteString, String, NotUsed] =
     flow(algorithm).map(res ⇒ res.messageDigest.toArray.map("%02x".format(_)).mkString).fold("")(_ + _)
 

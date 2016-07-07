@@ -18,11 +18,12 @@ package com.github.dnvriend.stream
 
 import java.util.UUID
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
 import akka.persistence.query.PersistenceQuery
 import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
@@ -111,6 +112,13 @@ trait TestSpec extends FlatSpec
       val tp = XMLEventSource.fromInputStream(is).via(PersonParser()).runWith(TestSink.probe[Person])
       tp.within(within)(f(tp))
     }
+
+  implicit class SourceOps[A](src: Source[A, NotUsed]) {
+    def testProbe(f: TestSubscriber.Probe[A] ⇒ Unit): Unit = {
+      val tp = src.runWith(TestSink.probe(system))
+      tp.within(10.seconds)(f(tp))
+    }
+  }
 
   def randomId = UUID.randomUUID.toString
 

@@ -45,7 +45,7 @@ libraryDependencies ++= {
     "org.apache.activemq" % "activemq-camel" % activeMqVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
-    "commons-io" % "commons-io" % "2.5" % Test,
+    "commons-io" % "commons-io" % "2.5",
     "org.iq80.leveldb" % "leveldb" % "0.7" % Test,
     "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,

@@ -11,16 +11,3 @@ services:
     ports:
       - "61616:61616" # broker (admin:adminactivemq)(amq:amq)
       - "8161:8161"   # web    http://boot2docker:8161/admin (admin:admin)
-
-  postgres:
-    image: postgres:latest
-    container_name: postgres
-    environment:
-      - "TZ=Europe/Amsterdam"
-      - "POSTGRES_USER=docker"
-      - "POSTGRES_PASSWORD=docker"
-      - "POSTGRES_DB=docker"
-    ports:
-      - "5432:5432"
-    volumes:
-      - "./initdb:/docker-entrypoint-initdb.d"

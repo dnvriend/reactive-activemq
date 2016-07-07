@@ -28,35 +28,33 @@ import scala.concurrent.ExecutionContext
 object ActiveMqConsumer {
   /**
    * Creates a consumer that consumes messages from a configured ActiveMq consumer until upstream terminates.
-   * The consumed messages must be consumed by an [[com.github.dnvriend.stream.activemq.AckSink]] or [[com.github.dnvriend.stream.persistence.AckJournalSink]]
+   * The consumed messages must be consumed by an [[com.github.dnvriend.stream.activemq.AckSink]] or [[com.github.dnvriend.stream.persistence.AckJournal]]
    * for before the source will emit the next element.
    */
   def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckUTup[A], ActorRef] =
     source(consumerName)
 
-
   /**
-    * Creates a consumer that consumes messages from a configured ActiveMq consumer and produces responses to the
-    * supplied response destination until upstream terminates. A consumed messages must be acknowledged by an
-    * [[com.github.dnvriend.stream.activemq.AckSink]] completion Sink before the source will emit the next element.
-    */
+   * Creates a consumer that consumes messages from a configured ActiveMq consumer and produces responses to the
+   * supplied response destination until upstream terminates. A consumed messages must be acknowledged by an
+   * [[com.github.dnvriend.stream.activemq.AckSink]] completion Sink before the source will emit the next element.
+   */
   def apply[A, B](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, B], builder: MessageBuilder[A, CamelMessage]): Source[AckTup[A, B], ActorRef] =
     requestResponseSource(consumerName)
 
   /**
    * Creates a consumer that consumes messages from a configured ActiveMq consumer until upstream terminates.
-   * The consumed messages must be consumed by an [[com.github.dnvriend.stream.activemq.AckSink]] or [[com.github.dnvriend.stream.persistence.AckJournalSink]]
+   * The consumed messages must be consumed by an [[com.github.dnvriend.stream.activemq.AckSink]] or [[com.github.dnvriend.stream.persistence.AckJournal]]
    * for before the source will emit the next element.
    */
   def source[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckUTup[A], ActorRef] =
     CamelActorPublisher.fromEndpointUriWithExtractor[A](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedFlow)
 
-
   /**
-    * Creates a consumer that consumes messages from a configured ActiveMq consumer and produces responses to the
-    * supplied response destination until upstream terminates. A consumed messages must be acknowledged by an
-    * [[com.github.dnvriend.stream.activemq.AckSink]] completion Sink before the source will emit the next element.
-    */
+   * Creates a consumer that consumes messages from a configured ActiveMq consumer and produces responses to the
+   * supplied response destination until upstream terminates. A consumed messages must be acknowledged by an
+   * [[com.github.dnvriend.stream.activemq.AckSink]] completion Sink before the source will emit the next element.
+   */
   def requestResponseSource[A, B](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, B], builder: MessageBuilder[A, CamelMessage]): Source[AckTup[A, B], ActorRef] =
     CamelActorPublisher.fromEndpointUriWithExtractor[B](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedResponseFlow)
 

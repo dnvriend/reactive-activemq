@@ -17,11 +17,10 @@
 package com.github.dnvriend.stream
 package activemq
 
-import akka.{Done, NotUsed}
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Source}
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 object AckFlow {
 

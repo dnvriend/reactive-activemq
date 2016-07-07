@@ -57,7 +57,6 @@ object AckFlowOps {
     }
   }
 
-
   implicit class SourceUnitOps[A](src: Source[AckTup[Unit, A], NotUsed]) {
     def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreach(f))
   }

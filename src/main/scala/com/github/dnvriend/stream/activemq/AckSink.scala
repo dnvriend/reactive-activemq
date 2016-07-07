@@ -18,7 +18,7 @@ package com.github.dnvriend.stream
 package activemq
 
 import akka.Done
-import akka.stream.scaladsl.{Flow, Keep, Sink}
+import akka.stream.scaladsl.{ Flow, Keep, Sink }
 
 import scala.collection.parallel.immutable
 import scala.concurrent.Future
@@ -32,7 +32,7 @@ object AckSink {
       case (p, a) ⇒
         if (!p.isCompleted) p.success(())
         a
-    }.toMat(Sink.seq[T])(Keep.right)
+    }.toMat(Sink.seq[T])(Keep.right).named("seqAckSink")
 
   /**
    * Creates a sink that acks each message and applies the given function with the received element until upstream terminates.
@@ -50,8 +50,8 @@ object AckSink {
     }.toMat(Sink.ignore)(Keep.right).named("foreachAckSink")
 
   /**
-    * A sink that completes supplied promises with supplied values
-    */
+   * A sink that completes supplied promises with supplied values
+   */
   def complete[A]: Sink[AckTup[A, A], Future[Done]] = {
     Flow[AckTup[A, A]].map {
       case (p, a) ⇒

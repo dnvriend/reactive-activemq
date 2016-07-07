@@ -19,24 +19,25 @@ package com.github.dnvriend.stream
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.{ Logging, LoggingAdapter }
 import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.scaladsl.{CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal}
+import akka.persistence.query.scaladsl.{ CurrentEventsByPersistenceIdQuery, EventsByPersistenceIdQuery, EventsByTagQuery, ReadJournal }
 import akka.stream.scaladsl.Sink
-import akka.stream.testkit.scaladsl.{TestSink, TestSource}
-import akka.stream.testkit.{TestPublisher, TestSubscriber}
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
+import akka.stream.testkit.{ TestPublisher, TestSubscriber }
+import akka.stream.{ ActorMaterializer, Materializer }
 import akka.util.Timeout
 import com.github.dnvriend.stream.JsonMessageBuilder._
 import com.github.dnvriend.stream.JsonMessageExtractor._
 import com.github.dnvriend.stream.activemq._
-import com.github.dnvriend.stream.xml.{PersonParser, XMLEventSource}
+import com.github.dnvriend.stream.xml.{ PersonParser, XMLEventSource }
 import org.scalatest._
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol
+import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 import scala.xml.pull.XMLEvent
 
@@ -51,15 +52,15 @@ object PersonDomain extends DefaultJsonProtocol {
 }
 
 trait TestSpec extends FlatSpec
-  with Matchers
-  with ScalaFutures
-  with BrokerResources
-  with BeforeAndAfterEach
-  with BeforeAndAfterAll
-  with OptionValues
-  with Eventually
-  with DatabaseResources
-  with ClasspathResources {
+    with Matchers
+    with ScalaFutures
+    with BrokerResources
+    with BeforeAndAfterEach
+    with BeforeAndAfterAll
+    with OptionValues
+    with Eventually
+    with LeveldbCleanup
+    with ClasspathResources {
 
   import PersonDomain._
 
@@ -70,13 +71,8 @@ trait TestSpec extends FlatSpec
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
   implicit val timeout = Timeout(30.seconds)
 
-  override val db = {
-    import slick.jdbc.JdbcBackend._
-    Database.forConfig("slick.db", system.settings.config)
-  }
-
   val journal = PersistenceQuery(system)
-    .readJournalFor("jdbc-read-journal")
+    .readJournalFor(LeveldbReadJournal.Identifier)
     .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with EventsByPersistenceIdQuery]
 
   val testPerson1 = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
@@ -96,13 +92,11 @@ trait TestSpec extends FlatSpec
   def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] ⇒ Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
 
-  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")
-                             (f: TestSubscriber.Probe[AckUTup[Person]] ⇒ Unit): Unit = {
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckUTup[Person]] ⇒ Unit): Unit = {
     f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]](system)))
   }
 
-  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")
-                                   (f: TestSubscriber.Probe[AckTup[Person, Person]] ⇒ Unit): Unit = {
+  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] ⇒ Unit): Unit = {
     f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
   }
 
@@ -125,11 +119,9 @@ trait TestSpec extends FlatSpec
 
   override protected def beforeEach(): Unit = {
     purgeQueues()
-    clearTables()
   }
 
   override protected def afterAll(): Unit = {
-    db.close()
     system.terminate().toTry should be a 'success
   }
 }

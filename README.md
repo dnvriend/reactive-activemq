@@ -1,4 +1,4 @@
-# reactive-activemq v0.0.14
+# reactive-activemq v0.0.15
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
 components, the [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume and produce messages with 
 [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
@@ -22,6 +22,12 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.14"
 ```
 
 # Whats new?
+- v0.0.15 (2016-07-07)
+  - Added `com.github.dnvriend.stream.io.FileUtils` component that can:
+    - Check whether or not a file exists,
+    - Delete a file,
+    - Move a file.
+
 - v0.0.14 (2016-07-07)
   - Merged PR #3 [Merlijn Boogerd][mboogerd] - Refactored bidi-flow, implemented request-response, thanks!
 

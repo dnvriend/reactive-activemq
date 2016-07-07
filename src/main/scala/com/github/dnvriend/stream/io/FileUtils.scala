@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.dnvriend.stream.io
+package com.github.dnvriend.stream
+package io
 
 import java.io.{ File, FileNotFoundException }
 

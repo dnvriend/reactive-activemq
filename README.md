@@ -1,7 +1,6 @@
 # reactive-activemq v0.0.15
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
-components, the [ActiveMqSource][amqsource] and [ActiveMqSink][amqsink] that can consume and produce messages with 
-[VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
+components, the [ActiveMqConsumer][amqconsumer] and [ActiveMqProducer][amqproducer] that can consume and produce messages with [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
 message flow between components. This project is very much work in progress.
 
 This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
@@ -18,7 +17,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.14"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.15"
 ```
 
 # Whats new?
@@ -73,7 +72,7 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.14"
     emits `scala.xml.pull.XMLEvent` for processing large XML files very fast with efficient memory usage.
 
 - v0.0.4 (2016-06-30)
-  - Added two new components, the `AckJournalSink` and the `JournalSink`.
+  - Added two new components, the `AckJournal` and`Journal`.
 
 - v0.0.3 (2016-06-29)
   - To initialize connections, a list of connections is added to `reactive-activemq` [config][config] which will be
@@ -104,9 +103,9 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.14"
 [mboogerd]: https://github.com/mboogerd
 [bijection]: https://en.wikipedia.org/wiki/Bijection
 
-[extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/extension/ActiveMqExtension.scala
+[extension]: https://github.com/dnvriend/reactive-activemq/tree/master/src/main/scala/com/github/dnvriend/stream/activemq/extension
 [builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageBuilder.scala
 [extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageExtractor.scala
-[amqsource]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqSource.scala
-[amqsink]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqSink.scala
+[amqconsumer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqConsumer.scala
+[amqproducer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqProducer.scala
 [msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala

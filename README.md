@@ -1,4 +1,4 @@
-# reactive-activemq v0.0.15
+# reactive-activemq v0.0.16
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
 components, the [ActiveMqConsumer][amqconsumer] and [ActiveMqProducer][amqproducer] that can consume and produce messages with [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
 message flow between components. This project is very much work in progress.
@@ -17,10 +17,17 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.15"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.16"
 ```
 
 # Whats new?
+- v0.0.16 (2016-07-09)
+  - Refactored package structure
+  - Journal, AckJournal and ResumableQuery have unit tests,
+  - Change to Journal, AckJournal and ResumableQuery flow API, using refactored bidi-flow
+    for a more user-friendly API; you don't have to worry about the tuple, this grealy simplifies
+    using the component.
+
 - v0.0.15 (2016-07-07)
   - Added `com.github.dnvriend.stream.io.FileUtils` component that can:
     - Check whether or not a file exists,

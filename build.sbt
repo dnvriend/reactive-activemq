@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.16-SNAPSHOT"
+version := "0.0.16"
 
 scalaVersion := "2.11.8"
 
@@ -46,8 +46,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "commons-io" % "commons-io" % "2.5",
-//    "org.iq80.leveldb" % "leveldb" % "0.7" % Test,
-//    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8" % Test,
     "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.3.2" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,

@@ -32,9 +32,6 @@ libraryDependencies ++= {
   val akkaVersion = "2.4.7"
   val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
-  val inMemoryVersion = "1.3.0"
-  val jdbcVersion = "2.5.0"
-  val slickVersion = "3.1.1"
   Seq(
     "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,

@@ -17,6 +17,9 @@
 package akka.stream.integration
 
 import java.io.File
+
+import akka.actor.PoisonPill
+import akka.testkit.TestProbe
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 
@@ -29,14 +32,13 @@ trait LeveldbCleanup extends BeforeAndAfterAll { _: TestSpec ⇒
   ).map(s ⇒ new File(system.settings.config.getString(s)))
 
   override protected def beforeAll() {
-    Try(storageLocations.foreach(FileUtils.deleteDirectory))
-    Try(storageLocations.foreach(FileUtils.forceMkdir))
     super.beforeAll()
+    Try(storageLocations.foreach(FileUtils.deleteDirectory))
   }
 
   override protected def afterAll() {
     super.afterAll()
     Try(storageLocations.foreach(FileUtils.deleteDirectory))
-    Try(storageLocations.foreach(FileUtils.forceMkdir))
+    //    Try(storageLocations.foreach(FileUtils.forceMkdir))
   }
 }

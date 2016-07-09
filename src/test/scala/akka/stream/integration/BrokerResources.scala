@@ -87,6 +87,7 @@ trait BrokerResources extends BeforeAndAfterEach { _: TestSpec ⇒
 
   override protected def beforeEach(): Unit = {
     purgeQueues()
+    super.beforeEach()
   }
 }
 

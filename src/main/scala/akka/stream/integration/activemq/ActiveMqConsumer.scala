@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext
 object ActiveMqConsumer {
   /**
    * Creates a consumer that consumes messages from a configured ActiveMq consumer until upstream terminates.
-   * The consumed messages must be consumed by an [[akka.stream.integration.activemq.AckSink]] or [[akka.stream.integration.persistence.AckJournal]]
+   * The consumed messages must be consumed by an [[akka.stream.integration.activemq.AckSink]] or [[akka.persistence.stream.AckJournal]]
    * for before the source will emit the next element.
    */
   def apply[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckUTup[A], ActorRef] =
@@ -44,7 +44,7 @@ object ActiveMqConsumer {
 
   /**
    * Creates a consumer that consumes messages from a configured ActiveMq consumer until upstream terminates.
-   * The consumed messages must be consumed by an [[akka.stream.integration.activemq.AckSink]] or [[akka.stream.integration.persistence.AckJournal]]
+   * The consumed messages must be consumed by an [[akka.stream.integration.activemq.AckSink]] or [[akka.persistence.stream.AckJournal]]
    * for before the source will emit the next element.
    */
   def source[A](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, A]): Source[AckUTup[A], ActorRef] =
@@ -57,5 +57,4 @@ object ActiveMqConsumer {
    */
   def requestResponseSource[A, B](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, B], builder: MessageBuilder[A, CamelMessage]): Source[AckTup[A, B], ActorRef] =
     CamelActorPublisher.fromEndpointUriWithExtractor[B](ActiveMqExtension(system).consumerEndpointUri(consumerName)).via(new AckedResponseFlow)
-
 }

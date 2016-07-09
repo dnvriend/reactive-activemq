@@ -42,6 +42,7 @@ import scala.xml.pull.XMLEvent
 import JsonMessageExtractor._
 import JsonMessageBuilder._
 import akka.persistence.Persistence
+import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 
 object PersonDomain extends DefaultJsonProtocol {
 
@@ -60,8 +61,8 @@ trait TestSpec extends FlatSpec
     with BeforeAndAfterAll
     with OptionValues
     with Eventually
-    with LeveldbCleanup
     with BrokerResources
+    with InMemoryCleanup
     with ClasspathResources {
 
   import PersonDomain._
@@ -76,7 +77,7 @@ trait TestSpec extends FlatSpec
   val writeJournal = Persistence(system).journalFor(null)
 
   val journal = PersistenceQuery(system)
-    .readJournalFor(LeveldbReadJournal.Identifier)
+    .readJournalFor(InMemoryReadJournal.Identifier)
     .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with CurrentEventsByTagQuery with EventsByPersistenceIdQuery]
 
   val testPerson1 = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))

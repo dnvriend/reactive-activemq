@@ -16,6 +16,7 @@
 
 package akka.persistence.stream
 
+import akka.NotUsed
 import akka.actor.{ ActorLogging, ActorSystem, Props }
 import akka.event.LoggingReceive
 import akka.persistence.query.EventEnvelope
@@ -24,68 +25,45 @@ import akka.stream._
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.{ ActorPublisher, ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
+import akka.stream.integration.activemq.AckBidiFlow
 import akka.stream.scaladsl.{ Broadcast, Flow, GraphDSL, Sink, Source }
-import akka.stream.stage.{ GraphStage, GraphStageLogic, InHandler, OutHandler }
-import akka.{ Done, NotUsed }
+import akka.util.Timeout
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
+import scala.util.Failure
 
 object ResumableQuery {
-  def apply(
+  def apply[A](
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
-    snapshotInterval: Option[Long] = Some(500),
+    snapshotInterval: Option[Long] = Some(250),
+    matSink: Sink[Any, A] = Sink.ignore,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
-  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[EventEnvelope, EventEnvelope, Future[Done]] = {
-    val resumableQuerySource = Source.actorPublisher[EventEnvelope](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
-    val resumableQuerySink = Sink.actorSubscriber[EventEnvelope](Props(new ResumableQuerySubscriber(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
-    val ignoreSink = Sink.ignore
-    Flow.fromGraph(GraphDSL.create(resumableQuerySource, resumableQuerySink, ignoreSink)((_, _, ig) ⇒ ig) { implicit b ⇒ (source, sink, ignore) ⇒
+  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) = {
+
+    val source = Source.actorPublisher[(Long, Any)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
+    val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
+      import akka.pattern.ask
+
+      import scala.concurrent.duration._
+      implicit val timeout = Timeout(10.seconds)
+      val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
+      (writer ? offset).map(_ ⇒ ())
+    }.to(Sink.ignore)
+
+    Flow.fromGraph(GraphDSL.create(source, sink, matSink)((_, _, matSink) ⇒ matSink) { implicit b ⇒ (src, snk, ignr) ⇒
       import GraphDSL.Implicits._
-      val bcast = b.add(new Broadcast[EventEnvelope](2, false))
-      val bidi = b.add(new ResumableQueryBidiFlow)
-      source ~> bidi.in1
+
+      val bidi = b.add(AckBidiFlow[Long, Any, Any]())
+      val bcast = b.add(Broadcast[(Long, Any)](2, eagerCancel = false))
+
+      src ~> bidi.in1
       bidi.out2 ~> bcast.in
-      bcast ~> sink
-      bcast ~> ignore
+      bcast ~> snk
+      bcast ~> ignr
+
       FlowShape(bidi.in2, bidi.out1)
-    })
-  }
-}
-
-private[persistence] class ResumableQueryBidiFlow extends GraphStage[BidiShape[EventEnvelope, EventEnvelope, EventEnvelope, EventEnvelope]] {
-  val in1 = Inlet[EventEnvelope]("ResumableQueryBidiFlow.in1")
-  val out1 = Outlet[EventEnvelope]("ResumableQueryBidiFlow.out1")
-  val in2 = Inlet[EventEnvelope]("ResumableQueryBidiFlow.in2")
-  val out2 = Outlet[EventEnvelope]("ResumableQueryBidiFlow.out2")
-
-  override val shape: BidiShape[EventEnvelope, EventEnvelope, EventEnvelope, EventEnvelope] =
-    BidiShape.of(in1, out1, in2, out2)
-
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    setHandler(in1, new InHandler {
-      override def onPush(): Unit = {
-        push(out1, grab(in1))
-      }
-    })
-
-    setHandler(out1, new OutHandler {
-      override def onPull(): Unit = {
-        pull(in1)
-      }
-    })
-
-    setHandler(in2, new InHandler {
-      override def onPush(): Unit = {
-        push(out2, grab(in2))
-      }
-    })
-
-    setHandler(out2, new OutHandler {
-      override def onPull(): Unit = {
-        pull(in2)
-      }
     })
   }
 }
@@ -94,19 +72,21 @@ object ResumableQueryPublisher {
   final case class LatestOffset(offset: Long)
 }
 
-private[persistence] class ResumableQueryPublisher(queryName: String, query: Long ⇒ Source[EventEnvelope, NotUsed], override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorPublisher[EventEnvelope] with DeliveryBuffer[EventEnvelope] with ActorLogging {
+private[persistence] class ResumableQueryPublisher(queryName: String, query: Long ⇒ Source[EventEnvelope, NotUsed], override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorPublisher[(Long, Any)] with DeliveryBuffer[(Long, Any)] with ActorLogging {
   import ResumableQueryPublisher._
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
   override val receiveRecover: Receive = {
     case SnapshotOffer(_, offset: Long) ⇒ latestOffset = offset
     case LatestOffset(offset)           ⇒ latestOffset = offset
-    case RecoveryCompleted              ⇒ query(latestOffset).runForeach(self ! _)
+    case RecoveryCompleted ⇒
+      log.debug("Query: {} is recovering from: {}", queryName, latestOffset)
+      query(latestOffset).runForeach(self ! _)
   }
 
   override val receiveCommand: Receive = LoggingReceive {
-    case msg: EventEnvelope ⇒
-      buf ++= Option(msg); deliverBuf()
+    case EventEnvelope(offset, _, _, event) ⇒
+      buf ++= Option(offset → event); deliverBuf()
     case Request(req) ⇒ deliverBuf()
     case Cancel       ⇒ context.stop(self)
   }
@@ -134,6 +114,34 @@ private[persistence] trait DeliveryBuffer[T] {
     }
 }
 
+private[persistence] class ResumableQueryWriter(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorLogging {
+  override val recovery: Recovery = Recovery.none
+  override val persistenceId: String = queryName
+  override val receiveRecover: Receive = PartialFunction.empty
+
+  override val receiveCommand: Receive = LoggingReceive {
+    case offset: Long ⇒
+      log.debug("Query: {} is saving offset: {}", queryName, offset)
+      persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
+        snapshotInterval.foreach { interval ⇒
+          if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
+            saveSnapshot(offset)
+        }
+        sender() ! akka.actor.Status.Success("")
+      }
+  }
+
+  override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
+    super.onPersistFailure(cause, event, seqNr)
+    sender() ! Failure(cause)
+  }
+
+  override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
+    super.onPersistRejected(cause, event, seqNr)
+    sender() ! Failure(cause)
+  }
+}
+
 private[persistence] class ResumableQuerySubscriber(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorSubscriber with ActorLogging {
   override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none
@@ -142,6 +150,7 @@ private[persistence] class ResumableQuerySubscriber(queryName: String, snapshotI
 
   override val receiveCommand: Receive = LoggingReceive {
     case OnNext(EventEnvelope(offset, _, _, _)) ⇒
+      log.debug("Query: {} is saving offset: {}", queryName, offset)
       persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
         snapshotInterval.foreach { interval ⇒
           if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)

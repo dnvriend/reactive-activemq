@@ -19,18 +19,16 @@ package akka.persistence.stream
 import java.util.UUID
 
 import akka.NotUsed
-import akka.actor.{ Actor, ActorRef, ActorSystem }
-import akka.pattern.{ PromiseActorRef, ask }
-import akka.persistence.JournalProtocol.{ WriteMessagesSuccessful, _ }
+import akka.actor.ActorSystem
+import akka.persistence.JournalProtocol._
 import akka.persistence._
 import akka.persistence.journal.Tagged
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.testkit.TestProbe
-import akka.util.Timeout
 
 import scala.collection.immutable.Seq
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
 
 /**
  * A [[akka.persistence.stream.Journal]] component is responsible for writing optionally tagged messages into the akka-persistence-journal.

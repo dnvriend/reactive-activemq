@@ -29,7 +29,7 @@ resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-rel
 testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
-  val akkaVersion = "2.4.7"
+  val akkaVersion = "2.4.8"
   val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
   Seq(

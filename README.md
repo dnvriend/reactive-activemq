@@ -110,9 +110,9 @@ libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.16"
 [mboogerd]: https://github.com/mboogerd
 [bijection]: https://en.wikipedia.org/wiki/Bijection
 
-[extension]: https://github.com/dnvriend/reactive-activemq/tree/master/src/main/scala/com/github/dnvriend/stream/activemq/extension
-[builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageBuilder.scala
-[extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/MessageExtractor.scala
-[amqconsumer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqConsumer.scala
-[amqproducer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/com/github/dnvriend/stream/activemq/ActiveMqProducer.scala
+[extension]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/akka/stream/integration/activemq/extension/ActiveMqExtension.scala
+[builder]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/akka/stream/integration/MessageBuilder.scala
+[extractor]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/akka/stream/integration/MessageExtractor.scala
+[amqconsumer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/akka/stream/integration/activemq/ActiveMqConsumer.scala
+[amqproducer]: https://github.com/dnvriend/reactive-activemq/blob/master/src/main/scala/akka/stream/integration/activemq/ActiveMqProducer.scala
 [msg]: https://github.com/akka/akka/blob/master/akka-camel/src/main/scala/akka/camel/CamelMessage.scala

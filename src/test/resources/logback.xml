@@ -11,13 +11,14 @@
     </appender>
 
 
-    <logger name="com.github.dnvriend" level="debug"/>
-    <!--<logger name="org.apache.activemq" level="debug"/>-->
+    <logger name="akka.stream.integration" level="debug"/>
+    <logger name="org.apache.activemq" level="debug"/>
     <!--<logger name="org.apache.camel" level="debug"/>-->
     <!--<logger name="akka.persistence.jdbc" level="debug"/>-->
     <!--<logger name="slick.backend.DatabaseComponent.action" level="debug"/>-->
     <!--<logger name="com.zaxxer.hikari.pool.HikariPool" level="debug"/>-->
-    <!--<logger name="akka" level="debug"/>-->
+    <logger name="akka" level="debug"/>
+    <logger name="akka.persistence" level="debug"/>
 
     <root level="error">
         <appender-ref ref="console"/>

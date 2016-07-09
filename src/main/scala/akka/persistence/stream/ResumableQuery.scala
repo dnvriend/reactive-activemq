@@ -22,9 +22,8 @@ import akka.event.LoggingReceive
 import akka.persistence.query.EventEnvelope
 import akka.persistence.{ PersistentActor, Recovery, RecoveryCompleted, SnapshotOffer }
 import akka.stream._
+import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
-import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
-import akka.stream.actor.{ ActorPublisher, ActorSubscriber, OneByOneRequestStrategy, RequestStrategy }
 import akka.stream.integration.activemq.AckBidiFlow
 import akka.stream.scaladsl.{ Broadcast, Flow, GraphDSL, Sink, Source }
 import akka.util.Timeout
@@ -139,26 +138,5 @@ private[persistence] class ResumableQueryWriter(queryName: String, snapshotInter
   override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
     super.onPersistRejected(cause, event, seqNr)
     sender() ! Failure(cause)
-  }
-}
-
-private[persistence] class ResumableQuerySubscriber(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorSubscriber with ActorLogging {
-  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
-  override val recovery: Recovery = Recovery.none
-  override val persistenceId: String = queryName
-  override val receiveRecover: Receive = PartialFunction.empty
-
-  override val receiveCommand: Receive = LoggingReceive {
-    case OnNext(EventEnvelope(offset, _, _, _)) ⇒
-      log.debug("Query: {} is saving offset: {}", queryName, offset)
-      persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
-        snapshotInterval.foreach { interval ⇒
-          if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
-            saveSnapshot(offset)
-        }
-        request(1)
-      }
-    case OnComplete     ⇒ context stop self
-    case OnError(cause) ⇒ context stop self
   }
 }

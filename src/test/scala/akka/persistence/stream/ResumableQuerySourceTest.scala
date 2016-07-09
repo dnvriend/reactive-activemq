@@ -21,23 +21,57 @@ import akka.stream.scaladsl.{ Flow, Sink, Source }
 import scala.collection.immutable.Seq
 
 class ResumableQuerySourceTest extends TestSpec {
-  def withQueryFromOffset[A](matSink: Sink[Any, A] = Sink.ignore)(f: Flow[Any, Any, A] ⇒ Unit): Unit = {
-    f(ResumableQuery("q1", offset ⇒ journal.eventsByTag("foo", offset + 1), matSink = matSink))
+  def withQueryFromOffset[A](queryName: String, matSink: Sink[Any, A] = Sink.ignore)(f: Flow[Any, Any, A] ⇒ Unit): Unit = {
+    f(ResumableQuery(queryName, offset ⇒ journal.eventsByTag("foo", offset + 1), matSink = matSink))
   }
 
-  it should "resume from the last offset" in {
+  "single query" should "resume from the last offset" in {
     Source.repeat("foo").take(10)
       .zip(Source.fromIterator(() ⇒ Iterator from 1)).map {
         case (a, b) ⇒ s"$a-$b"
       }.via(Journal(_ ⇒ Set("foo"))).runWith(Sink.ignore).futureValue
 
-    withQueryFromOffset(Sink.seq) { flow ⇒
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
       flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((1, "foo-1"), (2, "foo-2"))
     }
-    withQueryFromOffset(Sink.seq) { flow ⇒
+
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
       flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((3, "foo-3"), (4, "foo-4"))
     }
-    withQueryFromOffset(Sink.seq) { flow ⇒
+
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((5, "foo-5"), (6, "foo-6"))
+    }
+
+  }
+
+  "multiple queries" should "resume from the last offset" in {
+    Source.repeat("foo").take(10)
+      .zip(Source.fromIterator(() ⇒ Iterator from 1)).map {
+        case (a, b) ⇒ s"$a-$b"
+      }.via(Journal(_ ⇒ Set("foo"))).runWith(Sink.ignore).futureValue
+
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((1, "foo-1"), (2, "foo-2"))
+    }
+
+    withQueryFromOffset("q2", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((1, "foo-1"), (2, "foo-2"))
+    }
+
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((3, "foo-3"), (4, "foo-4"))
+    }
+
+    withQueryFromOffset("q1", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((5, "foo-5"), (6, "foo-6"))
+    }
+
+    withQueryFromOffset("q2", Sink.seq) { flow ⇒
+      flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((3, "foo-3"), (4, "foo-4"))
+    }
+
+    withQueryFromOffset("q2", Sink.seq) { flow ⇒
       flow.join(Flow[Any].take(2)).run().futureValue shouldBe Seq((5, "foo-5"), (6, "foo-6"))
     }
   }

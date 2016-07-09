@@ -12,6 +12,7 @@
 
 
     <logger name="akka.stream.integration" level="debug"/>
+    <logger name="akka.persistence.stream" level="debug"/>
     <!--<logger name="org.apache.activemq" level="debug"/>-->
     <!--<logger name="org.apache.camel" level="debug"/>-->
     <!--<logger name="akka.persistence.jdbc" level="debug"/>-->

@@ -57,8 +57,8 @@ object PersonDomain extends DefaultJsonProtocol {
 trait TestSpec extends FlatSpec
     with Matchers
     with ScalaFutures
-    with BeforeAndAfterEach
     with BeforeAndAfterAll
+    with BeforeAndAfterEach
     with OptionValues
     with Eventually
     with BrokerResources

@@ -22,9 +22,11 @@ import com.typesafe.config.Config
 import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
+
+import scala.util.Try
 import scalaz.syntax.std.boolean._
 
-case class ActiveMqConfig(host: String, port: String, user: String, pass: String)
+case class ActiveMqConfig(transport: String, host: String, port: String, user: String, pass: String)
 
 case class ConsumerConfig(conn: String, queue: String, concurrentConsumers: String)
 
@@ -49,6 +51,7 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
   }
 
   private def activeMqConfig(config: Config) = ActiveMqConfig(
+    Try(config.getString("transport")).getOrElse("nio"),
     config.getString("host"),
     config.getString("port"),
     config.getString("user"),
@@ -56,7 +59,7 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
   )
 
   private def createComponent(componentName: String, amqConfig: ActiveMqConfig): Unit = {
-    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"nio://${amqConfig.host}:${amqConfig.port}")
+    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"${amqConfig.transport}://${amqConfig.host}:${amqConfig.port}")
     val jmsConfiguration: JmsConfiguration = new JmsConfiguration()
     jmsConfiguration.setConnectionFactory(connectionFactory)
     val ctx = CamelExtension(system).context

@@ -1,0 +1,19 @@
+language: scala
+sudo: true
+services:
+  - docker
+before_install:
+  - docker pull rmohr/activemq:5.10.0
+  - docker run -d -v "./activemq/activemq.xml:/conf/activemq.xml" -p 127.0.0.1:61616:61616 -p 127.0.0.1:8161:8161 rmohr/activemq:5.10.0
+  - docker ps -a
+scala:
+  - "2.11.8"
+jdk:
+  - oraclejdk8
+branches:
+  only:
+    - master
+notifications:
+  email:
+    - dnvriend@gmail.com
+script: "./build.sh"

@@ -43,22 +43,24 @@ object Journal {
   /**
    * Returns a [[akka.stream.scaladsl.Flow]] that writes messages to a configured akka-persistence-journal
    */
-  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext): Flow[A, A, NotUsed] =
+  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
     flow(tags, journalPluginId)
+
+  /**
+   * Returns an [[akka.stream.scaladsl.Flow]] that writes messages to the akka-persistence-journal.
+   */
+  def flow[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
+    Flow[A].mapAsync(1) { element ⇒
+      import akka.pattern.ask
+      val writer = system.actorOf(Props(new JournalActor(tags, journalPluginId)))
+      (writer ? element).map(_ ⇒ element)
+    }
 
   /**
    * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal.
    */
   def sink[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[A, ActorRef] =
     Sink.actorSubscriber[A](Props(new JournalActorSubscriber[A](tags, journalPluginId)))
-
-  def flow[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext) = Flow[A].mapAsync(1) { element ⇒
-    import akka.pattern.ask
-    import scala.concurrent.duration._
-    implicit val timeout = Timeout(10.seconds)
-    val writer = system.actorOf(Props(new JournalActor(tags, journalPluginId)))
-    (writer ? element).map(_ ⇒ element)
-  }
 
   /**
    * Returns a [[akka.stream.scaladsl.Flow]] that writes messages to a configured akka-persistence-journal
@@ -77,10 +79,6 @@ object Journal {
       }
     }
 
-  private def empty(a: Any): Set[String] = Set.empty[String]
-
-  private def randomId = UUID.randomUUID().toString
-
   private def createRepr(payload: Any, tags: Set[String])(implicit system: ActorSystem) = {
     val id = randomId
     PersistentRepr(
@@ -90,6 +88,10 @@ object Journal {
       writerUuid = id
     )
   }
+
+  private def randomId = UUID.randomUUID().toString
+
+  private def empty(a: Any): Set[String] = Set.empty[String]
 }
 
 private[persistence] class JournalActor(tags: Any ⇒ Set[String], override val journalPluginId: String) extends PersistentActor with ActorLogging {

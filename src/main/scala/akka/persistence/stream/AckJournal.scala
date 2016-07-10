@@ -16,39 +16,30 @@
 
 package akka.persistence.stream
 
-import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.stream.Materializer
 import akka.stream.integration.AckUTup
-import akka.stream.scaladsl.{ Flow, Source }
+import akka.stream.integration.activemq.{ AckSink, ActiveMqFlow }
+import akka.stream.scaladsl._
+import akka.util.Timeout
+import akka.{ Done, NotUsed }
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
- * An [[akka.persistence.stream.AckJournal]] is responsible for writing optionally tagged messages into the akka-persistence-journal
- * and ack-ing each message.
+ * The [[akka.persistence.stream.AckJournal]] is responsible for writing optionally tagged messages into the akka-persistence-journal
+ * and ack-ing each message. The messages can optionally be preprocessed.
  */
 object AckJournal {
   private def empty(a: Any): Set[String] = Set.empty[String]
 
   /**
-   * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to akka-persistence and acks each message.
+   * Returns an [[akka.stream.scaladsl.Flow]] that writes messages to akka-persistence and acks each message.
    */
-  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext): Flow[AckUTup[A], AckUTup[A], NotUsed] =
-    flow(tags, journalPluginId)
-
-  /**
-   * Returns a [[akka.stream.scaladsl.Flow]] that writes messages to akka-persistence and acks each message.
-   */
-  def flow[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext): Flow[AckUTup[A], AckUTup[A], NotUsed] =
-    Flow[AckUTup[A]].flatMapConcat {
-      case (promise, element) ⇒
-        Source.single(element).via(Journal(tags, journalPluginId)).map { _ ⇒
-          if (!promise.isCompleted) promise.success(())
-          promise → element
-        }.recover {
-          case cause: Throwable ⇒
-            if (!promise.isCompleted) promise.failure(cause)
-            promise → element
-        }
-    }
+  def apply[S, T, M](source: Source[AckUTup[S], M], tags: Any ⇒ Set[String] = empty, preProcessor: Flow[S, T, NotUsed], journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, mat: Materializer, timeout: Timeout): Future[Done] =
+    ActiveMqFlow.applyMat(source, AckSink.foreach[Unit](_ ⇒ ()))(Keep.right)
+      .via(preProcessor)
+      .via(Journal(tags, journalPluginId))
+      .join(Flow[T].map(_ ⇒ ()))
+      .run()
 }

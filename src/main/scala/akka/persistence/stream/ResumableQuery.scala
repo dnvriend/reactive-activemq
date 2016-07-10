@@ -39,12 +39,11 @@ object ResumableQuery {
     matSink: Sink[Any, A] = Sink.ignore,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
-  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) = {
+  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[Any, Any, A] = {
 
     val source = Source.actorPublisher[(Long, Any)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
     val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
       import akka.pattern.ask
-
       import scala.concurrent.duration._
       implicit val timeout = Timeout(10.seconds)
       val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))

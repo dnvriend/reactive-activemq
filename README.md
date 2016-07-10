@@ -1,15 +1,12 @@
-# reactive-activemq v0.0.16
-reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two 
+# reactive-activemq #
+
+[![Join the chat at https://gitter.im/dnvriend/reactive-activemq](https://badges.gitter.im/dnvriend/reactive-activemq.svg)](https://gitter.im/dnvriend/reactive-activemq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Download](https://api.bintray.com/packages/dnvriend/maven/reactive-activemq/images/download.svg)](https://bintray.com/dnvriend/maven/reactive-activemq/_latestVersion)
+[![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two
 components, the [ActiveMqConsumer][amqconsumer] and [ActiveMqProducer][amqproducer] that can consume and produce messages with [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the
 message flow between components. This project is very much work in progress.
-
-This project has been inspired by [op-rabbit][op-rabbit] by [SpinGo][spingo].
-
-Service | Status | Description
-------- | ------ | -----------
-License | [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) | Apache 2.0
-Bintray | [![Download](https://api.bintray.com/packages/dnvriend/maven/reactive-activemq/images/download.svg)](https://bintray.com/dnvriend/maven/reactive-activemq/_latestVersion) | Latest Version on Bintray
-Gitter | [![Join the chat at https://gitter.im/dnvriend/reactive-activemq](https://badges.gitter.im/dnvriend/reactive-activemq.svg)](https://gitter.im/dnvriend/reactive-activemq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) | Chat on Gitter
 
 ## Installation
 Add the following to your `build.sbt`:
@@ -19,6 +16,14 @@ resolvers += Resolver.jcenterRepo
 
 libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.16"
 ```
+
+## Contribution policy ##
+
+Contributions via GitHub pull requests are gladly accepted from their original author. Along with any pull requests, please state that the contribution is your original work and that you license the work to the project under the project's open source license. Whether or not you state this explicitly, by submitting any copyrighted material via pull request, email, or other means you agree to license the material under the project's open source license and warrant that you have the legal authority to do so.
+
+## License ##
+
+This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
 - v0.0.16 (2016-07-09)

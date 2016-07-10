@@ -26,7 +26,8 @@ import scala.xml.NodeSeq
 
 trait BrokerResources extends BeforeAndAfterEach { _: TestSpec ⇒
   private def callBroker(path: String): InputStream = {
-    val url = new URL("http://boot2docker:8161" + path)
+    val amqHost = system.settings.config.getString("amq.host")
+    val url = new URL(s"http://$amqHost:8161" + path)
     val urlConnection = url.openConnection()
     val basicAuth = "Basic " + new String(java.util.Base64.getUrlEncoder.encode("admin:admin".getBytes()))
     urlConnection.addRequestProperty("Authorization", basicAuth)

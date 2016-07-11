@@ -23,10 +23,9 @@ import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
 
-import scala.util.Try
 import scalaz.syntax.std.boolean._
 
-case class ActiveMqConfig(transport: String, host: String, port: String, user: String, pass: String)
+case class ActiveMqConfig(host: String, port: String, user: String, pass: String, transport: String)
 
 case class ConsumerConfig(conn: String, queue: String, concurrentConsumers: String)
 
@@ -51,11 +50,11 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
   }
 
   private def activeMqConfig(config: Config) = ActiveMqConfig(
-    Try(config.getString("transport")).getOrElse("nio"),
     config.getString("host"),
     config.getString("port"),
     config.getString("user"),
-    config.getString("pass")
+    config.getString("pass"),
+    config.hasPath("transport").option(config.getString("transport")).getOrElse("nio")
   )
 
   private def createComponent(componentName: String, amqConfig: ActiveMqConfig): Unit = {

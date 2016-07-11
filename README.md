@@ -15,7 +15,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.16"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.17"
 ```
 
 ## Contribution policy ##
@@ -27,6 +27,9 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.17 (2016-07-11)
+  - Optimalization to Journal component
+
 - v0.0.16 (2016-07-09)
   - Refactored package structure
   - Journal, AckJournal and ResumableQuery have unit tests,

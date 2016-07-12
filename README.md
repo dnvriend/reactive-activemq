@@ -15,7 +15,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.18"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.20"
 ```
 
 ## Contribution policy ##
@@ -27,6 +27,12 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.20 (2016-07-12)
+  - Merged PR #4 [Merlijn Boogerd][mboogerd] - Extracted configuration from ActiveMqExtension, thanks!
+
+- v0.0.19 (2016-07-12)
+  - Resumable query, changed the OUTPUT of the flow to from EventEnvelope to Any.
+
 - v0.0.18 (2016-07-12)
   - Resumable query, create the writer on global global scope (not in stage), also there
    is *no* guarantee that messages will be delivered exactly-once. The interface of the

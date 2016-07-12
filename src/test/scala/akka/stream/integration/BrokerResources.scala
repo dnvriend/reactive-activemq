@@ -25,6 +25,9 @@ import org.scalatest.BeforeAndAfterEach
 import scala.xml.NodeSeq
 
 trait BrokerResources extends BeforeAndAfterEach { _: TestSpec ⇒
+
+  def enableClearQueus: Boolean
+
   private def callBroker(path: String): InputStream = {
     val amqHost = system.settings.config.getString("amq.host")
     val url = new URL(s"http://$amqHost:8161" + path)
@@ -87,7 +90,8 @@ trait BrokerResources extends BeforeAndAfterEach { _: TestSpec ⇒
   } yield stat.enqueueCount - stat.dequeueCount
 
   override protected def beforeEach(): Unit = {
-    purgeQueues()
+    if (enableClearQueus)
+      purgeQueues()
     super.beforeEach()
   }
 }

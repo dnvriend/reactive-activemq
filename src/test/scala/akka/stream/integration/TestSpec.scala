@@ -86,6 +86,8 @@ trait TestSpec extends FlatSpec
   final val PersonsXmlFile = "xml/persons.xml"
   final val LotOfPersonsXmlFile = "xml/lot-of-persons.xml"
 
+  override def enableClearQueus: Boolean = true
+
   implicit class PimpedByteArray(self: Array[Byte]) {
     def getString: String = new String(self)
   }

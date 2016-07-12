@@ -32,32 +32,32 @@ import scala.concurrent.ExecutionContext
 import scala.util.Failure
 
 object ResumableQuery {
-  def apply[A](
+  def apply[Mat](
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
     snapshotInterval: Option[Long] = Some(250),
-    matSink: Sink[Any, A] = Sink.ignore,
+    matSink: Sink[Any, Mat] = Sink.ignore,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
-  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[Any, Any, A] = {
+  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[EventEnvelope, EventEnvelope, Mat] = {
     import akka.pattern.ask
+    val source = Source.actorPublisher[(Long, EventEnvelope)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
     val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
-    val source = Source.actorPublisher[(Long, Any)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
-    val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
+    val sink = Flow[(Long, EventEnvelope)].map(_._1).mapAsync(1) { offset ⇒
       (writer ? offset).map(_ ⇒ ())
     }.to(Sink.ignore)
 
-    Flow.fromGraph(GraphDSL.create(source, sink, matSink)((_, _, matSink) ⇒ matSink) { implicit b ⇒ (src, snk, ignr) ⇒
+    Flow.fromGraph(GraphDSL.create(source, sink, matSink)((_, _, matSink) ⇒ matSink) { implicit b ⇒ (src, snk, matSnk) ⇒
       import GraphDSL.Implicits._
 
-      val bidi = b.add(AckBidiFlow[Long, Any, Any]())
-      val bcast = b.add(Broadcast[(Long, Any)](2, eagerCancel = false))
-      val backpressure = Flow[(Long, Any)].buffer(1, OverflowStrategy.backpressure)
+      val bidi = b.add(AckBidiFlow[Long, EventEnvelope, EventEnvelope]())
+      val bcast = b.add(Broadcast[(Long, EventEnvelope)](2, eagerCancel = false))
+      val backpressure = Flow[(Long, EventEnvelope)].buffer(1, OverflowStrategy.backpressure)
 
       src ~> backpressure ~> bidi.in1
       bidi.out2 ~> bcast.in
       bcast ~> snk
-      bcast ~> ignr
+      bcast ~> matSnk
 
       FlowShape(bidi.in2, bidi.out1)
     })
@@ -68,11 +68,19 @@ object ResumableQueryPublisher {
   final case class LatestOffset(offset: Long)
 }
 
-private[persistence] class ResumableQueryPublisher(queryName: String, query: Long ⇒ Source[EventEnvelope, NotUsed], override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorPublisher[(Long, Any)] with DeliveryBuffer[(Long, Any)] with ActorLogging {
+private[persistence] class ResumableQueryPublisher(
+  queryName: String,
+  query: Long ⇒ Source[EventEnvelope, NotUsed],
+  override val journalPluginId: String,
+  override val snapshotPluginId: String
+)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor
+    with ActorPublisher[(Long, EventEnvelope)]
+    with DeliveryBuffer[(Long, EventEnvelope)]
+    with ActorLogging {
+
   import ResumableQueryPublisher._
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
-
   log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
 
   override val receiveRecover: Receive = {
@@ -84,8 +92,8 @@ private[persistence] class ResumableQueryPublisher(queryName: String, query: Lon
   }
 
   override val receiveCommand: Receive = LoggingReceive {
-    case EventEnvelope(offset, _, _, event) ⇒
-      buf ++= Option(offset → event); deliverBuf()
+    case envelope: EventEnvelope ⇒
+      buf ++= Option(envelope.offset → envelope); deliverBuf()
     case Request(req) ⇒ deliverBuf()
     case Cancel       ⇒ context.stop(self)
   }

@@ -27,6 +27,13 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.18 (2016-07-12)
+  - Resumable query, create the writer on global global scope (not in stage), also there
+   is *no* guarantee that messages will be delivered exactly-once. The interface of the
+   ResumableQuery should be an EventEnvelope as the non-resumable akka-persistence-query are too.
+   Also the EventEnvelope is created for the client to implement exactly-once handling of messages ie.
+   the persistenceId/seqNo/offset meta is available to be used exactly for that purpose.
+
 - v0.0.17 (2016-07-11)
   - Optimalization to Journal component
 

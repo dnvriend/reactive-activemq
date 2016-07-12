@@ -18,18 +18,10 @@ package akka.stream.integration.activemq.extension
 
 import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
 import akka.camel.CamelExtension
-import com.typesafe.config.Config
+import akka.stream.integration.activemq.extension.config.{ ActiveMqConfig, ConsumerConfig, ProducerConfig }
 import org.apache.activemq.ActiveMQConnectionFactory
 import org.apache.activemq.camel.component.ActiveMQComponent
 import org.apache.camel.component.jms.JmsConfiguration
-
-import scalaz.syntax.std.boolean._
-
-case class ActiveMqConfig(host: String, port: String, user: String, pass: String, transport: String)
-
-case class ConsumerConfig(conn: String, queue: String, concurrentConsumers: String)
-
-case class ProducerConfig(conn: String, topic: String, replyTo: Option[String])
 
 object ActiveMqExtension extends ExtensionId[ActiveMqExtensionImpl] with ExtensionIdProvider {
   override def createExtension(system: ExtendedActorSystem): ActiveMqExtensionImpl = new ActiveMqExtensionImpl(system)
@@ -39,23 +31,18 @@ object ActiveMqExtension extends ExtensionId[ActiveMqExtensionImpl] with Extensi
 
 trait ActiveMqExtension {
   def consumerEndpointUri(consumerName: String): String
+
   def producerEndpointUri(producerName: String): String
 }
 
 class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension with ActiveMqExtension {
+
   import scala.collection.JavaConversions._
+
   system.settings.config.getStringList("reactive-activemq.connections").foreach { componentName ⇒
-    val amqConfig = activeMqConfig(system.settings.config.getConfig(componentName))
+    val amqConfig = ActiveMqConfig(system.settings.config.getConfig(componentName))
     createComponent(componentName, amqConfig)
   }
-
-  private def activeMqConfig(config: Config) = ActiveMqConfig(
-    config.getString("host"),
-    config.getString("port"),
-    config.getString("user"),
-    config.getString("pass"),
-    config.hasPath("transport").option(config.getString("transport")).getOrElse("nio")
-  )
 
   private def createComponent(componentName: String, amqConfig: ActiveMqConfig): Unit = {
     val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"${amqConfig.transport}://${amqConfig.host}:${amqConfig.port}")
@@ -68,29 +55,9 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
     ctx.addComponent(componentName, component)
   }
 
-  private def consumerConfig(config: Config) = ConsumerConfig(
-    config.getString("conn"),
-    config.getString("queue"),
-    config.getString("concurrentConsumers")
-  )
+  override def consumerEndpointUri(consumerName: String): String =
+    ConsumerConfig(system.settings.config.getConfig(consumerName), Some(consumerName)).endpoint
 
-  private def producerConfig(config: Config) = ProducerConfig(
-    config.getString("conn"),
-    config.getString("topic"),
-    config.hasPath("reply-to").option(config.getString("reply-to"))
-  )
-
-  override def consumerEndpointUri(consumerName: String): String = {
-    val cfg = consumerConfig(system.settings.config.getConfig(consumerName))
-    import cfg._
-    val destination = s"$conn:queue:Consumer.$consumerName.VirtualTopic.$queue?concurrentConsumers=$concurrentConsumers"
-    destination
-  }
-
-  override def producerEndpointUri(producerName: String): String = {
-    val cfg = producerConfig(system.settings.config.getConfig(producerName))
-    import cfg._
-    val maybeReplyTo = replyTo.map(dest ⇒ s"?replyTo=$dest&preserveMessageQos=true").getOrElse("")
-    s"$conn:topic:VirtualTopic.$topic$maybeReplyTo"
-  }
+  override def producerEndpointUri(producerName: String): String =
+    ProducerConfig(system.settings.config.getConfig(producerName)).endpoint
 }

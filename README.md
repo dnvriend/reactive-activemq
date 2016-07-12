@@ -15,7 +15,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.17"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.18"
 ```
 
 ## Contribution policy ##

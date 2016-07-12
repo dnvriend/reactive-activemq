@@ -16,7 +16,6 @@
 
 package akka.persistence.stream
 
-import akka.NotUsed
 import akka.actor.{ ActorLogging, ActorSystem, Props }
 import akka.event.LoggingReceive
 import akka.persistence.query.EventEnvelope
@@ -25,40 +24,36 @@ import akka.stream._
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.integration.activemq.AckBidiFlow
-import akka.stream.scaladsl.{ Broadcast, Flow, GraphDSL, Sink, Source }
+import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
 import akka.util.Timeout
+import akka.{ Done, NotUsed }
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Failure
 
 object ResumableQuery {
-  def apply[Mat](
+  def apply(
     queryName: String,
     query: Long ⇒ Source[EventEnvelope, NotUsed],
     snapshotInterval: Option[Long] = Some(250),
-    matSink: Sink[Any, Mat] = Sink.ignore,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
-  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[EventEnvelope, EventEnvelope, Mat] = {
+  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[Any, EventEnvelope, Future[Done]] = {
     import akka.pattern.ask
     val source = Source.actorPublisher[(Long, EventEnvelope)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
     val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
-    val sink = Flow[(Long, EventEnvelope)].map(_._1).mapAsync(1) { offset ⇒
+    val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
       (writer ? offset).map(_ ⇒ ())
-    }.to(Sink.ignore)
+    }.toMat(Sink.ignore)(Keep.right)
 
-    Flow.fromGraph(GraphDSL.create(source, sink, matSink)((_, _, matSink) ⇒ matSink) { implicit b ⇒ (src, snk, matSnk) ⇒
+    Flow.fromGraph(GraphDSL.create(source, sink)(Keep.right) { implicit b ⇒ (src, snk) ⇒
       import GraphDSL.Implicits._
 
-      val bidi = b.add(AckBidiFlow[Long, EventEnvelope, EventEnvelope]())
-      val bcast = b.add(Broadcast[(Long, EventEnvelope)](2, eagerCancel = false))
+      val bidi = b.add(AckBidiFlow[Long, EventEnvelope, Any]())
       val backpressure = Flow[(Long, EventEnvelope)].buffer(1, OverflowStrategy.backpressure)
 
       src ~> backpressure ~> bidi.in1
-      bidi.out2 ~> bcast.in
-      bcast ~> snk
-      bcast ~> matSnk
-
+      bidi.out2 ~> snk
       FlowShape(bidi.in2, bidi.out1)
     })
   }

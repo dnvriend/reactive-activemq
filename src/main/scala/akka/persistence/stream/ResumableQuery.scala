@@ -39,14 +39,11 @@ object ResumableQuery {
     matSink: Sink[Any, A] = Sink.ignore,
     journalPluginId: String = "",
     snapshotPluginId: String = ""
-  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem): Flow[Any, Any, A] = {
-
+  )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[Any, Any, A] = {
+    import akka.pattern.ask
+    val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
     val source = Source.actorPublisher[(Long, Any)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
     val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
-      import akka.pattern.ask
-      import scala.concurrent.duration._
-      implicit val timeout = Timeout(10.seconds)
-      val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
       (writer ? offset).map(_ ⇒ ())
     }.to(Sink.ignore)
 
@@ -55,8 +52,9 @@ object ResumableQuery {
 
       val bidi = b.add(AckBidiFlow[Long, Any, Any]())
       val bcast = b.add(Broadcast[(Long, Any)](2, eagerCancel = false))
+      val backpressure = Flow[(Long, Any)].buffer(1, OverflowStrategy.backpressure)
 
-      src ~> bidi.in1
+      src ~> backpressure ~> bidi.in1
       bidi.out2 ~> bcast.in
       bcast ~> snk
       bcast ~> ignr
@@ -74,6 +72,9 @@ private[persistence] class ResumableQueryPublisher(queryName: String, query: Lon
   import ResumableQueryPublisher._
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
+
+  log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
+
   override val receiveRecover: Receive = {
     case SnapshotOffer(_, offset: Long) ⇒ latestOffset = offset
     case LatestOffset(offset)           ⇒ latestOffset = offset
@@ -117,9 +118,11 @@ private[persistence] class ResumableQueryWriter(queryName: String, snapshotInter
   override val persistenceId: String = queryName
   override val receiveRecover: Receive = PartialFunction.empty
 
+  log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
+
   override val receiveCommand: Receive = LoggingReceive {
     case offset: Long ⇒
-      log.debug("Query: {} is saving offset: {}", queryName, offset)
+      log.debug("Query: '{}' is saving offset: '{}'", queryName, offset)
       persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
         snapshotInterval.foreach { interval ⇒
           if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)

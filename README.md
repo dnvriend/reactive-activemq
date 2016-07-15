@@ -15,7 +15,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.20"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.21"
 ```
 
 ## Contribution policy ##
@@ -27,6 +27,9 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.21 (2016-07-15)
+  - ResumableQuery uses a better strategy that leverages backpressure
+
 - v0.0.20 (2016-07-12)
   - Merged PR #4 [Merlijn Boogerd][mboogerd] - Extracted configuration from ActiveMqExtension, thanks!
 

@@ -34,6 +34,10 @@ class ResumableQuerySourceTest extends TestSpec {
     f(ResumableQuery(queryName, offset ⇒ journal.eventsByTag("foo", offset + 1)))
   }
 
+  def withQueryFromOffsetWithSnapshot(queryName: String, snapshotAfter: Int)(f: Flow[Any, EventEnvelope, Future[Done]] ⇒ Unit): Unit = {
+    f(ResumableQuery(queryName, offset ⇒ journal.eventsByTag("foo", offset + 1), Some(snapshotAfter)))
+  }
+
   override def enableClearQueus: Boolean = false
 
   def countEvents(queryName: String): Future[Long] =
@@ -143,5 +147,43 @@ class ResumableQuerySourceTest extends TestSpec {
     }
 
     eventually(countEvents("q2").futureValue shouldBe 10)
+  }
+
+  it should "recover from snapshot" in {
+    Source.repeat("foo").take(10)
+      .zip(Source.fromIterator(() ⇒ Iterator from 1)).map {
+        case (a, b) ⇒ s"$a-$b"
+      }.via(Journal(_ ⇒ Set("foo"))).runWith(Sink.ignore).futureValue
+
+    // q1 to 2
+    withQueryFromOffsetWithSnapshot("q1", 2) { flow ⇒
+      flow.join(takeTwo).run().futureValue shouldBe Done
+    }
+
+    eventually(countEvents("q1").futureValue shouldBe 2)
+
+    withQueryFromOffsetWithSnapshot("q1", 2) { flow ⇒
+      flow.join(takeTwo).run().futureValue shouldBe Done
+    }
+
+    eventually(countEvents("q1").futureValue shouldBe 4)
+
+    withQueryFromOffsetWithSnapshot("q1", 2) { flow ⇒
+      flow.join(takeTwo).run().futureValue shouldBe Done
+    }
+
+    eventually(countEvents("q1").futureValue shouldBe 6)
+
+    withQueryFromOffsetWithSnapshot("q1", 2) { flow ⇒
+      flow.join(takeTwo).run().futureValue shouldBe Done
+    }
+
+    eventually(countEvents("q1").futureValue shouldBe 8)
+
+    withQueryFromOffsetWithSnapshot("q1", 2) { flow ⇒
+      flow.join(takeTwo).run().futureValue shouldBe Done
+    }
+
+    eventually(countEvents("q1").futureValue shouldBe 10)
   }
 }

@@ -22,7 +22,6 @@ import akka.persistence.query.EventEnvelope
 import akka.persistence.{ PersistentActor, Recovery, RecoveryCompleted, SnapshotOffer }
 import akka.stream._
 import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.integration.activemq.AckBidiFlow
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
 import akka.util.Timeout
@@ -40,18 +39,18 @@ object ResumableQuery {
     snapshotPluginId: String = ""
   )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem, timeout: Timeout): Flow[Any, EventEnvelope, Future[Done]] = {
     import akka.pattern.ask
-    val source = Source.actorPublisher[(Long, EventEnvelope)](Props(new ResumableQueryPublisher(queryName, query, journalPluginId, snapshotPluginId)))
+
     val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
     val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
-      (writer ? offset).map(_ ⇒ ())
+      writer ? offset
     }.toMat(Sink.ignore)(Keep.right)
 
-    Flow.fromGraph(GraphDSL.create(source, sink)(Keep.right) { implicit b ⇒ (src, snk) ⇒
+    Flow.fromGraph(GraphDSL.create(sink) { implicit b ⇒ snk ⇒
       import GraphDSL.Implicits._
-
+      val src = Source.actorPublisher[Long](Props(new ResumableQueryPublisher(queryName, journalPluginId, snapshotPluginId)))
+        .flatMapConcat(query).map(ev ⇒ (ev.offset, ev))
       val bidi = b.add(AckBidiFlow[Long, EventEnvelope, Any]())
       val backpressure = Flow[(Long, EventEnvelope)].buffer(1, OverflowStrategy.backpressure)
-
       src ~> backpressure ~> bidi.in1
       bidi.out2 ~> snk
       FlowShape(bidi.in2, bidi.out1)
@@ -59,61 +58,32 @@ object ResumableQuery {
   }
 }
 
-object ResumableQueryPublisher {
-  final case class LatestOffset(offset: Long)
-}
-
 private[persistence] class ResumableQueryPublisher(
   queryName: String,
-  query: Long ⇒ Source[EventEnvelope, NotUsed],
   override val journalPluginId: String,
   override val snapshotPluginId: String
 )(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor
-    with ActorPublisher[(Long, EventEnvelope)]
-    with DeliveryBuffer[(Long, EventEnvelope)]
+    with ActorPublisher[Long]
     with ActorLogging {
 
-  import ResumableQueryPublisher._
   override val persistenceId: String = queryName
   var latestOffset: Long = 0L
   log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
 
   override val receiveRecover: Receive = {
-    case SnapshotOffer(_, offset: Long) ⇒ latestOffset = offset
-    case LatestOffset(offset)           ⇒ latestOffset = offset
+    case SnapshotOffer(_, offset: Long) ⇒
+      log.debug("Query: {} is recovering from snapshot offer: {}", queryName, offset)
+      latestOffset = offset
+    case offset: Long ⇒
+      log.debug("Query: {} is recovering applying offset event: {}", queryName, offset)
+      latestOffset = offset
     case RecoveryCompleted ⇒
-      log.debug("Query: {} is recovering from: {}", queryName, latestOffset)
-      query(latestOffset).runForeach(self ! _)
+      log.debug("Query: {} has finished recovering to offset: {}", queryName, latestOffset)
+      onNext(latestOffset)
+      onCompleteThenStop()
   }
 
-  override val receiveCommand: Receive = LoggingReceive {
-    case envelope: EventEnvelope ⇒
-      buf ++= Option(envelope.offset → envelope); deliverBuf()
-    case Request(req) ⇒ deliverBuf()
-    case Cancel       ⇒ context.stop(self)
-  }
-}
-
-private[persistence] trait DeliveryBuffer[T] {
-  _: ActorPublisher[T] ⇒
-
-  var buf = Vector.empty[T]
-
-  def deliverBuf(): Unit =
-    if (buf.nonEmpty && totalDemand > 0) {
-      if (buf.size == 1) {
-        // optimize for this common case
-        onNext(buf.head)
-        buf = Vector.empty
-      } else if (totalDemand <= Int.MaxValue) {
-        val (use, keep) = buf.splitAt(totalDemand.toInt)
-        buf = keep
-        use foreach onNext
-      } else {
-        buf foreach onNext
-        buf = Vector.empty
-      }
-    }
+  override val receiveCommand: Receive = PartialFunction.empty
 }
 
 private[persistence] class ResumableQueryWriter(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorLogging {
@@ -126,7 +96,7 @@ private[persistence] class ResumableQueryWriter(queryName: String, snapshotInter
   override val receiveCommand: Receive = LoggingReceive {
     case offset: Long ⇒
       log.debug("Query: '{}' is saving offset: '{}'", queryName, offset)
-      persist(ResumableQueryPublisher.LatestOffset(offset)) { _ ⇒
+      persist(offset) { _ ⇒
         snapshotInterval.foreach { interval ⇒
           if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
             saveSnapshot(offset)

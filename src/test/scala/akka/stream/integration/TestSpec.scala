@@ -128,6 +128,8 @@ trait TestSpec extends FlatSpec
     }
   }
 
+  Source(List(1, 2, 3)).runWith(Sink.seq)
+
   def randomId = UUID.randomUUID.toString
 
   def countJournal(pid: String): Future[Int] =

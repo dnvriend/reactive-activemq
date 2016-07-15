@@ -28,6 +28,7 @@ import akka.util.Timeout
 import akka.{ Done, NotUsed }
 
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.duration._
 import scala.util.Failure
 
 object ResumableQuery {
@@ -67,6 +68,7 @@ private[persistence] class ResumableQueryPublisher(
     with ActorLogging {
 
   override val persistenceId: String = queryName
+  final val RecoveredMessage = "RECOVERED"
   var latestOffset: Long = 0L
   log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
 
@@ -79,11 +81,17 @@ private[persistence] class ResumableQueryPublisher(
       latestOffset = offset
     case RecoveryCompleted ⇒
       log.debug("Query: {} has finished recovering to offset: {}", queryName, latestOffset)
-      onNext(latestOffset)
-      onCompleteThenStop()
+      context.system.scheduler.scheduleOnce(0.seconds, self, RecoveredMessage)
   }
 
-  override val receiveCommand: Receive = PartialFunction.empty
+  override val receiveCommand: Receive = {
+    case RecoveredMessage if totalDemand == 0 ⇒
+      context.system.scheduler.scheduleOnce(0.seconds, self, RecoveredMessage)
+    case RecoveredMessage if totalDemand > 0 ⇒
+      onNext(latestOffset)
+      onCompleteThenStop()
+
+  }
 }
 
 private[persistence] class ResumableQueryWriter(queryName: String, snapshotInterval: Option[Long] = None, override val journalPluginId: String, override val snapshotPluginId: String)(implicit mat: Materializer, ec: ExecutionContext, system: ActorSystem) extends PersistentActor with ActorLogging {

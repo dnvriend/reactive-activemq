@@ -124,7 +124,7 @@ trait TestSpec extends FlatSpec
   implicit class SourceOps[A](src: Source[A, NotUsed]) {
     def testProbe(f: TestSubscriber.Probe[A] ⇒ Unit): Unit = {
       val tp = src.runWith(TestSink.probe(system))
-      tp.within(10.seconds)(f(tp))
+      f(tp)
     }
   }
 

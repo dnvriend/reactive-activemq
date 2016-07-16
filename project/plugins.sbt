@@ -22,3 +22,6 @@ addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
 
 // enable updating file headers eg. for copyright
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1")
+
+// documentation //
+addSbtPlugin("com.lihaoyi" % "scalatex-sbt-plugin" % "0.3.5")

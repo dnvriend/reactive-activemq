@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.22"
+version := "0.0.23-SNAPSHOT"
 
 scalaVersion := "2.11.8"
 
@@ -81,3 +81,24 @@ headers := Map(
 )
 
 enablePlugins(AutomateHeaderPlugin)
+
+lazy val readme = scalatex.ScalatexReadme(
+  projectId = "readme",
+  wd = file(""),
+  url = "https://github.com/lihaoyi/scalatags/tree/master",
+  source = "Readme",
+  autoResources = Seq("reactive-amq.png")
+).settings(
+  scalaVersion := "2.11.8",
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
+//  ,
+//  (run in Compile) <<= (run in Compile).dependsOn(Def.task{
+//    sbt.IO.createDirectory(baseDirectory.value/".."/"target"/"scala-2.11"/"classes"/"readme")
+//    sbt.IO.copyDirectory(
+//      (target in Compile).value/"scalatex",
+//      baseDirectory.value/".."/"target"/"scala-2.11"/"classes"/"readme",
+//      overwrite = true)
+//  })
+)

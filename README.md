@@ -3,6 +3,8 @@
 [![Join the chat at https://gitter.im/dnvriend/reactive-activemq](https://badges.gitter.im/dnvriend/reactive-activemq.svg)](https://gitter.im/dnvriend/reactive-activemq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/dnvriend/reactive-activemq.svg?branch=master)](https://travis-ci.org/dnvriend/reactive-activemq)
 [![Download](https://api.bintray.com/packages/dnvriend/maven/reactive-activemq/images/download.svg)](https://bintray.com/dnvriend/maven/reactive-activemq/_latestVersion)
+[![Code Climate](https://codeclimate.com/github/dnvriend/reactive-activemq/badges/gpa.svg)](https://codeclimate.com/github/dnvriend/reactive-activemq)
+[![Issue Count](https://codeclimate.com/github/dnvriend/reactive-activemq/badges/issue_count.svg)](https://codeclimate.com/github/dnvriend/reactive-activemq)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two

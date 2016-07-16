@@ -3,6 +3,15 @@
 /project/*-shim.sbt
 /project/project/
 /project/target/
-/target/
 .idea/
 *.iml
+target/
+*.iml
+.idea
+.settings
+.classpath
+.project
+.cache
+.sbtserver
+project/.sbtserver
+tags

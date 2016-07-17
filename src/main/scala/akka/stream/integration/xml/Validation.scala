@@ -64,7 +64,7 @@ private[xml] class ValidationFlow(xsd: String) extends GraphStage[FlowShape[Byte
           validator.validate(new StreamSource(b.result().iterator.asInputStream))
           emit(out, ValidationResult(Success(Done)))
         } catch {
-          case t: Throwable ⇒
+          case t: Throwable =>
             emit(out, ValidationResult(Failure(t)))
         }
         completeStage()

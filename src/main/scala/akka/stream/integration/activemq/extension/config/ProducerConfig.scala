@@ -30,7 +30,7 @@ object ProducerConfig {
 
 case class ProducerConfig(conn: String, topic: String, replyTo: Option[String]) extends EndpointDefinition {
   override lazy val endpoint: String = {
-    val maybeReplyTo = replyTo.map(dest ⇒ s"?replyTo=$dest&preserveMessageQos=true").getOrElse("")
+    val maybeReplyTo = replyTo.map(dest => s"?replyTo=$dest&preserveMessageQos=true").getOrElse("")
     s"$conn:topic:VirtualTopic.$topic$maybeReplyTo"
   }
 }

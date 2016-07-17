@@ -38,7 +38,7 @@ trait ActiveMqTestSpec extends TestSpec {
    * Creates an acknowledging bidirectional flow whose back-end and output can be manipulated using probes; it expects
    * an implicit backendFlow such as can be acquired from withBackendFlow
    */
-  def withAckBidiFlow(test: TestPublisher.Probe[AckUTup[Person]] ⇒ TestSubscriber.Probe[AckUTup[Person]] ⇒ Any)(implicit backendFlow: Flow[Person, Person, NotUsed]): Unit = {
+  def withAckBidiFlow(test: TestPublisher.Probe[AckUTup[Person]] => TestSubscriber.Probe[AckUTup[Person]] => Any)(implicit backendFlow: Flow[Person, Person, NotUsed]): Unit = {
 
     val inputSource = TestSource.probe[AckUTup[Person]]
     val outputSink = TestSink.probe[AckUTup[Person]]
@@ -53,10 +53,10 @@ trait ActiveMqTestSpec extends TestSpec {
   /**
    * Creates a back-end flow whose messages can be intercepted using a traditional testprobe
    */
-  def withBackendFlow(test: Flow[Person, Person, NotUsed] ⇒ TestProbe ⇒ Any): Unit = {
+  def withBackendFlow(test: Flow[Person, Person, NotUsed] => TestProbe => Any): Unit = {
     import akka.pattern.ask
     val flowProbe = TestProbe()
-    val backendFlow = Flow[Person].mapAsync(1)(p ⇒ (flowProbe.ref ? p).mapTo[Person])
+    val backendFlow = Flow[Person].mapAsync(1)(p => (flowProbe.ref ? p).mapTo[Person])
     test(backendFlow)(flowProbe)
   }
 
@@ -65,31 +65,31 @@ trait ActiveMqTestSpec extends TestSpec {
    *
    * NOTE: Test using this fixture assume correct implementation of ActiveMqSource and ActiveMqSink!
    */
-  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)(test: Flow[Person, Person, NotUsed] ⇒ Any): Unit =
+  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)(test: Flow[Person, Person, NotUsed] => Any): Unit =
     test(ActiveMqFlow[Person, Person](sourceEndpoint, sinkEndpoint))
 
   /**
    * Creates a request-response flow with an ActiveMqSource, acknowledging sink and bidi-flow to join them.
    */
-  def withReqRespBidiFlow[S, T](sourceEndpoint: String)(test: Flow[Person, Person, NotUsed] ⇒ Any): Any = {
+  def withReqRespBidiFlow[S, T](sourceEndpoint: String)(test: Flow[Person, Person, NotUsed] => Any): Any = {
     test(ActiveMqReqRespFlow[Person, Person](sourceEndpoint))
   }
 
   /**
    * Creates an AutoPilot that performs request-response according to the supplied function
    */
-  implicit def function1ToAutoPilot[S, T](f: S ⇒ T): AutoPilot = new AutoPilot {
+  implicit def function1ToAutoPilot[S, T](f: S => T): AutoPilot = new AutoPilot {
     override def run(sender: ActorRef, msg: Any): AutoPilot = msg match {
-      case s: S ⇒
+      case s: S =>
         val tryT: Try[T] = Try(f(s))
         tryT match {
-          case Success(t) ⇒
+          case Success(t) =>
             sender ! t
             function1ToAutoPilot(f)
-          case Failure(f) ⇒
+          case Failure(f) =>
             fail(s"Failed to apply supplied function to received message: $s", f)
         }
-      case _ ⇒
+      case _ =>
         fail(s"Received message is not of the required type: $msg")
     }
   }

@@ -24,8 +24,8 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
   behavior of "AckBidiFlow"
 
   it should "propagate an element downstream, and propagate returned elements upstream, wrapped with the initial promise" in {
-    withBackendFlow { implicit backendFlow ⇒ flowProbe ⇒
-      withAckBidiFlow { inputProbe ⇒ outputProbe ⇒
+    withBackendFlow { implicit backendFlow => flowProbe =>
+      withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise = Promise[Unit]()
 
@@ -39,7 +39,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
 
         flowProbe.reply(testPerson1)
 
-        val outputPromise = outputProbe.expectNextPF { case (p: Promise[Unit], `testPerson1`) ⇒ p }
+        val outputPromise = outputProbe.expectNextPF { case (p: Promise[Unit], `testPerson1`) => p }
 
         inputPromise should equal(outputPromise)
       }
@@ -47,8 +47,8 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
   }
 
   it should "zip incoming promises with back-end values" in {
-    withBackendFlow { implicit backendFlow ⇒ flowProbe ⇒
-      withAckBidiFlow { inputProbe ⇒ outputProbe ⇒
+    withBackendFlow { implicit backendFlow => flowProbe =>
+      withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise1 = Promise[Unit]()
         val inputPromise2 = Promise[Unit]()
@@ -61,12 +61,12 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
         flowProbe.reply(testPerson2)
 
         outputProbe.request(2)
-        outputProbe.expectNextPF { case (`inputPromise1`, `testPerson2`) ⇒ }
+        outputProbe.expectNextPF { case (`inputPromise1`, `testPerson2`) => }
 
         flowProbe.expectMsg(testPerson2)
         flowProbe.reply(testPerson1)
 
-        outputProbe.expectNextPF { case (`inputPromise2`, `testPerson1`) ⇒ }
+        outputProbe.expectNextPF { case (`inputPromise2`, `testPerson1`) => }
         outputProbe.expectComplete()
 
         outputProbe.cancel()
@@ -75,8 +75,8 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
   }
 
   it should "respect buffer size" in {
-    withBackendFlow { implicit backendFlow ⇒ flowProbe ⇒
-      withAckBidiFlow { inputProbe ⇒ outputProbe ⇒
+    withBackendFlow { implicit backendFlow => flowProbe =>
+      withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise1 = Promise[Unit]()
         val inputPromise2 = Promise[Unit]()

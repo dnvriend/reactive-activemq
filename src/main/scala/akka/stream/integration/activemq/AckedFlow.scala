@@ -39,7 +39,7 @@ private[activemq] class AckedFlow[A, B](implicit ec: ExecutionContext) extends G
         val eventualResponse = p.future
         eventualResponse.onSuccess(successResponse(ref))
         eventualResponse.onFailure {
-          case cause: Throwable ⇒
+          case cause: Throwable =>
             ref ! akka.actor.Status.Failure(cause)
         }
         promises = promises.filterNot(_._1.isCompleted) :+ (p → eventualResponse)
@@ -56,12 +56,12 @@ private[activemq] class AckedFlow[A, B](implicit ec: ExecutionContext) extends G
 
   /* Extracted to allow overriding for request-response pattern */
   def successResponse(source: ActorRef): PartialFunction[A, Unit] = {
-    case _ ⇒ source ! akka.camel.Ack
+    case _ => source ! akka.camel.Ack
   }
 }
 
 class AckedResponseFlow[A, B](implicit ec: ExecutionContext, builder: MessageBuilder[A, CamelMessage]) extends AckedFlow[A, B] {
   override def successResponse(source: ActorRef): PartialFunction[A, Unit] = {
-    case msg ⇒ source ! builder.build(msg)
+    case msg => source ! builder.build(msg)
   }
 }

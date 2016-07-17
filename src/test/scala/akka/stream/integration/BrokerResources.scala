@@ -24,7 +24,7 @@ import org.scalatest.BeforeAndAfterEach
 
 import scala.xml.NodeSeq
 
-trait BrokerResources extends BeforeAndAfterEach { _: TestSpec ⇒
+trait BrokerResources extends BeforeAndAfterEach { _: TestSpec =>
 
   def enableClearQueus: Boolean
 

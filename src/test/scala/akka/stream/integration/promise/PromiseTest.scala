@@ -21,20 +21,20 @@ import scala.concurrent.{ Future, Promise }
 
 class PromiseTest extends TestSpec {
 
-  def withPromise[A]()(fn: (Promise[A], Future[A]) ⇒ Unit): Unit = {
+  def withPromise[A]()(fn: (Promise[A], Future[A]) => Unit): Unit = {
     val p: Promise[A] = Promise[A]()
     val f: Future[A] = p.future
     fn(p, f)
   }
 
-  "a promise" should "be completed successfully" in withPromise[Int]() { (p, f) ⇒
+  "a promise" should "be completed successfully" in withPromise[Int]() { (p, f) =>
     p success 1
     p shouldBe 'completed
     f.futureValue shouldBe 1
     p shouldBe 'completed
   }
 
-  it should "not be completed multiple times" in withPromise[Int]() { (p, f) ⇒
+  it should "not be completed multiple times" in withPromise[Int]() { (p, f) =>
     p success 1
     p shouldBe 'completed
     intercept[IllegalStateException] {
@@ -42,7 +42,7 @@ class PromiseTest extends TestSpec {
     }
   }
 
-  it should "not be completed with a success and then with a failure" in withPromise[Int]() { (p, f) ⇒
+  it should "not be completed with a success and then with a failure" in withPromise[Int]() { (p, f) =>
     p failure new RuntimeException("Test failure")
     p shouldBe 'completed
     f.toTry should be a 'failure
@@ -51,13 +51,13 @@ class PromiseTest extends TestSpec {
     }
   }
 
-  it should "be completed with a failure" in withPromise[Int]() { (p, f) ⇒
+  it should "be completed with a failure" in withPromise[Int]() { (p, f) =>
     p failure new RuntimeException("Test failure")
     p shouldBe 'completed
     f.toTry should be a 'failure
   }
 
-  it should "not be completed with a failure and then with a success" in withPromise[Int]() { (p, f) ⇒
+  it should "not be completed with a failure and then with a success" in withPromise[Int]() { (p, f) =>
     p failure new RuntimeException("Test failure")
     p shouldBe 'completed
     intercept[IllegalStateException] {

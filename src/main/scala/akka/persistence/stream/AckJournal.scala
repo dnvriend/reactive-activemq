@@ -36,10 +36,10 @@ object AckJournal {
   /**
    * Returns an [[akka.stream.scaladsl.Flow]] that writes messages to akka-persistence and acks each message.
    */
-  def apply[S, T, M](source: Source[AckUTup[S], M], tags: Any ⇒ Set[String] = empty, preProcessor: Flow[S, T, NotUsed], journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, mat: Materializer, timeout: Timeout): Future[Done] =
-    ActiveMqFlow.applyMat(source, AckSink.foreach[Unit](_ ⇒ ()))(Keep.right)
+  def apply[S, T, M](source: Source[AckUTup[S], M], tags: Any => Set[String] = empty, preProcessor: Flow[S, T, NotUsed], journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, mat: Materializer, timeout: Timeout): Future[Done] =
+    ActiveMqFlow.applyMat(source, AckSink.foreach[Unit](_ => ()))(Keep.right)
       .via(preProcessor)
       .via(Journal(tags, journalPluginId))
-      .join(Flow[T].map(_ ⇒ ()))
+      .join(Flow[T].map(_ => ()))
       .run()
 }

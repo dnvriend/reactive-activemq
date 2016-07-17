@@ -22,7 +22,7 @@ import scala.concurrent.{ Future, Promise }
 import scala.util.Try
 
 class SeqPromisesTest extends TestSpec {
-  def withPromise[T, U](complete: Try[T] ⇒ U, failure: PartialFunction[Throwable, U]): (Promise[T], Future[T]) = {
+  def withPromise[T, U](complete: Try[T] => U, failure: PartialFunction[Throwable, U]): (Promise[T], Future[T]) = {
     val p = Promise[T]()
     val f = p.future
     f.onComplete(complete)
@@ -30,25 +30,25 @@ class SeqPromisesTest extends TestSpec {
     p → f
   }
 
-  def withPromises()(f: Seq[(Promise[Unit], Future[Unit])] ⇒ Unit): Unit = f(Seq(
-    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty),
-    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty),
-    withPromise((_: Try[Unit]) ⇒ (), PartialFunction.empty)
+  def withPromises()(f: Seq[(Promise[Unit], Future[Unit])] => Unit): Unit = f(Seq(
+    withPromise((_: Try[Unit]) => (), PartialFunction.empty),
+    withPromise((_: Try[Unit]) => (), PartialFunction.empty),
+    withPromise((_: Try[Unit]) => (), PartialFunction.empty)
   ))
 
-  it should "complete a promise" in withPromises() { xs ⇒
+  it should "complete a promise" in withPromises() { xs =>
     xs.head._1.success(())
     xs.head._2.futureValue shouldBe ()
     xs.filterNot(_._1.isCompleted).size shouldBe 2
   }
 
-  it should "complete multiple promises" in withPromises() { xs ⇒
+  it should "complete multiple promises" in withPromises() { xs =>
     xs.zipWithIndex.foreach {
-      case ((p, f), 0) ⇒
+      case ((p, f), 0) =>
         p success (); f.futureValue shouldBe ()
-      case ((p, f), 1) ⇒
+      case ((p, f), 1) =>
         p success (); f.futureValue shouldBe ()
-      case ((p, f), 2) ⇒
+      case ((p, f), 2) =>
         p success (); f.futureValue shouldBe ()
     }
   }

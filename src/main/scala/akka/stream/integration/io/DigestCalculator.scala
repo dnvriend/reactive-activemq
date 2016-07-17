@@ -54,7 +54,7 @@ object DigestCalculator {
    * Returns the String encoded as Hex representation of the digested stream of [[akka.util.ByteString]]
    */
   def hexString(algorithm: Algorithm): Flow[ByteString, String, NotUsed] =
-    flow(algorithm).map(res ⇒ res.messageDigest.toArray.map("%02x".format(_)).mkString).fold("")(_ + _)
+    flow(algorithm).map(res => res.messageDigest.toArray.map("%02x".format(_)).mkString).fold("")(_ + _)
 
   def sink(algorithm: Algorithm): Sink[ByteString, Future[DigestResult]] =
     flow(algorithm).toMat(Sink.head)(Keep.right)

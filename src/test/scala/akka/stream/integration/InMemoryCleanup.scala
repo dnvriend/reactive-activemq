@@ -20,7 +20,7 @@ import akka.persistence.inmemory.extension.{ InMemoryJournalStorage, StorageExte
 import akka.testkit.TestProbe
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, TestData }
 
-trait InMemoryCleanup extends BeforeAndAfterAll with BeforeAndAfterEach { _: TestSpec ⇒
+trait InMemoryCleanup extends BeforeAndAfterAll with BeforeAndAfterEach { _: TestSpec =>
 
   lazy val storage = StorageExtension(system).journalStorage
 

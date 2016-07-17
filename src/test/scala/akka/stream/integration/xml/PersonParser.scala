@@ -47,53 +47,53 @@ class PersonParser extends GraphStage[FlowShape[XMLEvent, Person]] {
         var inLastName: Boolean = false
         var inAge: Boolean = false
         override def onPush(): Unit = grab(in) match {
-          case EvElemEnd(_, "person") ⇒
+          case EvElemEnd(_, "person") =>
             val personToEmit = person.copy(address = address)
             push(out, personToEmit)
             person = Person()
             address = Address()
 
-          case EvElemStart(_, "first-name", _, _) ⇒
+          case EvElemStart(_, "first-name", _, _) =>
             inFirstName = true
             pull(in)
 
-          case EvElemStart(_, "last-name", _, _) ⇒
+          case EvElemStart(_, "last-name", _, _) =>
             inLastName = true
             pull(in)
 
-          case EvElemStart(_, "age", _, _) ⇒
+          case EvElemStart(_, "age", _, _) =>
             inAge = true
             pull(in)
 
-          case EvText(text) if inFirstName ⇒
+          case EvText(text) if inFirstName =>
             person = person.copy(firstName = text)
             pull(in)
 
-          case EvText(text) if inLastName ⇒
+          case EvText(text) if inLastName =>
             person = person.copy(lastName = text)
             pull(in)
 
-          case EvText(text) if inAge ⇒
+          case EvText(text) if inAge =>
             person = person.copy(age = text.toInt)
             pull(in)
 
-          case EvElemEnd(_, "first-name") ⇒
+          case EvElemEnd(_, "first-name") =>
             inFirstName = false
             pull(in)
 
-          case EvElemEnd(_, "last-name") ⇒
+          case EvElemEnd(_, "last-name") =>
             inLastName = false
             pull(in)
 
-          case EvElemEnd(_, "age") ⇒
+          case EvElemEnd(_, "age") =>
             inAge = false
             pull(in)
 
-          case EvElemStart(_, "address", _, _) ⇒
+          case EvElemStart(_, "address", _, _) =>
             setHandler(in, addressHandler)
             pull(in)
 
-          case _ ⇒
+          case _ =>
             pull(in)
         }
       }
@@ -104,59 +104,59 @@ class PersonParser extends GraphStage[FlowShape[XMLEvent, Person]] {
         var inZip: Boolean = false
         var inCity: Boolean = false
         override def onPush(): Unit = grab(in) match {
-          case EvElemEnd(_, "address") ⇒
+          case EvElemEnd(_, "address") =>
             setHandler(in, personHandler)
             pull(in)
 
-          case EvElemStart(_, "street", _, _) ⇒
+          case EvElemStart(_, "street", _, _) =>
             inStreet = true
             pull(in)
 
-          case EvElemStart(_, "house-number", _, _) ⇒
+          case EvElemStart(_, "house-number", _, _) =>
             inHouseNr = true
             pull(in)
 
-          case EvElemStart(_, "zip-code", _, _) ⇒
+          case EvElemStart(_, "zip-code", _, _) =>
             inZip = true
             pull(in)
 
-          case EvElemStart(_, "city", _, _) ⇒
+          case EvElemStart(_, "city", _, _) =>
             inCity = true
             pull(in)
 
-          case EvElemEnd(_, "street") ⇒
+          case EvElemEnd(_, "street") =>
             inStreet = false
             pull(in)
 
-          case EvElemEnd(_, "house-number") ⇒
+          case EvElemEnd(_, "house-number") =>
             inHouseNr = false
             pull(in)
 
-          case EvElemEnd(_, "zip-code") ⇒
+          case EvElemEnd(_, "zip-code") =>
             inZip = false
             pull(in)
 
-          case EvElemEnd(_, "city") ⇒
+          case EvElemEnd(_, "city") =>
             inCity = false
             pull(in)
 
-          case EvText(text) if inStreet ⇒
+          case EvText(text) if inStreet =>
             address = address.copy(street = text)
             pull(in)
 
-          case EvText(text) if inHouseNr ⇒
+          case EvText(text) if inHouseNr =>
             address = address.copy(houseNumber = text)
             pull(in)
 
-          case EvText(text) if inZip ⇒
+          case EvText(text) if inZip =>
             address = address.copy(zipCode = text)
             pull(in)
 
-          case EvText(text) if inCity ⇒
+          case EvText(text) if inCity =>
             address = address.copy(city = text)
             pull(in)
 
-          case _ ⇒
+          case _ =>
             pull(in)
         }
       }

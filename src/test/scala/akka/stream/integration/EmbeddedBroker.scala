@@ -42,6 +42,6 @@
 //  broker.waitUntilStarted()
 //}
 //
-//trait EmbeddedBroker { _: TestSpec ⇒
+//trait EmbeddedBroker { _: TestSpec =>
 //  val broker: BrokerService = EmbeddedBroker.broker
 //}

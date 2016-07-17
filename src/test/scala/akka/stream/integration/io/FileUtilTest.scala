@@ -25,7 +25,7 @@ import scala.util.{ Failure, Success }
 class FileUtilTest extends TestSpec {
   "check file exists" should "find an existing file" in {
     Source.single(FileUtilsCommand.Exists("src/main/resources/reference.conf"))
-      .via(FileUtils.exists).testProbe { tp ⇒
+      .via(FileUtils.exists).testProbe { tp =>
         tp.request(1)
         tp.expectNext(FileExistsResult(Success(Done)))
         tp.expectComplete()
@@ -34,9 +34,9 @@ class FileUtilTest extends TestSpec {
 
   it should "not find a non-existing file" in {
     Source.single(FileUtilsCommand.Exists("src/main/resources/i-do-not-exist.conf"))
-      .via(FileUtils.exists).testProbe { tp ⇒
+      .via(FileUtils.exists).testProbe { tp =>
         tp.request(1)
-        tp.expectNextPF { case FileExistsResult(Failure(t)) ⇒ }
+        tp.expectNextPF { case FileExistsResult(Failure(t)) => }
         tp.expectComplete()
       }
   }
@@ -44,7 +44,7 @@ class FileUtilTest extends TestSpec {
   "check file exists tagged" should "find an existing file" in {
     val tag: String = randomId
     Source.single((tag, FileUtilsCommand.Exists("src/main/resources/reference.conf")))
-      .via(FileUtils.existsTagged).testProbe { tp ⇒
+      .via(FileUtils.existsTagged).testProbe { tp =>
         tp.request(1)
         tp.expectNext((tag, FileExistsResult(Success(Done))))
         tp.expectComplete()

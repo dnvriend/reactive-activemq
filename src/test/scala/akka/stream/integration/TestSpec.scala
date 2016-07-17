@@ -96,33 +96,33 @@ trait TestSpec extends FlatSpec
     def toTry: Try[T] = Try(self.futureValue)
   }
 
-  def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] ⇒ Unit): Unit = {
+  def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] => Unit): Unit = {
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
   }
 
-  def withTestTopicSubscriber(endpoint: String = "PersonConsumer", within: FiniteDuration = 10.seconds)(f: TestSubscriber.Probe[AckUTup[Person]] ⇒ Unit): Unit = {
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer", within: FiniteDuration = 10.seconds)(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit = {
     val tp = ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]])
     tp.within(within)(f(tp))
   }
 
-  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] ⇒ Unit): Unit = {
+  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit = {
     f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
   }
 
-  def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] ⇒ Unit): Unit =
-    withInputStream(filename) { is ⇒
+  def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] => Unit): Unit =
+    withInputStream(filename) { is =>
       val tp = XMLEventSource.fromInputStream(is).runWith(TestSink.probe[XMLEvent])
       tp.within(within)(f(tp))
     }
 
-  def withTestXMLPersonParser(within: FiniteDuration = 5.seconds)(filename: String)(f: TestSubscriber.Probe[Person] ⇒ Unit): Unit =
-    withInputStream(filename) { is ⇒
+  def withTestXMLPersonParser(within: FiniteDuration = 5.seconds)(filename: String)(f: TestSubscriber.Probe[Person] => Unit): Unit =
+    withInputStream(filename) { is =>
       val tp = XMLEventSource.fromInputStream(is).via(PersonParser()).runWith(TestSink.probe[Person])
       tp.within(within)(f(tp))
     }
 
   implicit class SourceOps[A](src: Source[A, NotUsed]) {
-    def testProbe(f: TestSubscriber.Probe[A] ⇒ Unit): Unit = {
+    def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit = {
       val tp = src.runWith(TestSink.probe(system))
       f(tp)
     }

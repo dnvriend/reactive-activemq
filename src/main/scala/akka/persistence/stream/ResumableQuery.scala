@@ -34,7 +34,7 @@ import scala.util.Failure
 object ResumableQuery {
   def apply(
     queryName: String,
-    query: Long ⇒ Source[EventEnvelope, NotUsed],
+    query: Long => Source[EventEnvelope, NotUsed],
     snapshotInterval: Option[Long] = Some(250),
     journalPluginId: String = "",
     snapshotPluginId: String = ""
@@ -42,14 +42,14 @@ object ResumableQuery {
     import akka.pattern.ask
 
     val writer = system.actorOf(Props(new ResumableQueryWriter(queryName, snapshotInterval, journalPluginId, snapshotPluginId)))
-    val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset ⇒
+    val sink = Flow[(Long, Any)].map(_._1).mapAsync(1) { offset =>
       writer ? offset
     }.toMat(Sink.ignore)(Keep.right)
 
-    Flow.fromGraph(GraphDSL.create(sink) { implicit b ⇒ snk ⇒
+    Flow.fromGraph(GraphDSL.create(sink) { implicit b => snk =>
       import GraphDSL.Implicits._
       val src = Source.actorPublisher[Long](Props(new ResumableQueryPublisher(queryName, journalPluginId, snapshotPluginId)))
-        .flatMapConcat(query).map(ev ⇒ (ev.offset, ev))
+        .flatMapConcat(query).map(ev => (ev.offset, ev))
       val bidi = b.add(AckBidiFlow[Long, EventEnvelope, Any]())
       val backpressure = Flow[(Long, EventEnvelope)].buffer(1, OverflowStrategy.backpressure)
       src ~> backpressure ~> bidi.in1
@@ -73,21 +73,21 @@ private[persistence] class ResumableQueryPublisher(
   log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
 
   override val receiveRecover: Receive = {
-    case SnapshotOffer(_, offset: Long) ⇒
+    case SnapshotOffer(_, offset: Long) =>
       log.debug("Query: {} is recovering from snapshot offer: {}", queryName, offset)
       latestOffset = offset
-    case offset: Long ⇒
+    case offset: Long =>
       log.debug("Query: {} is recovering applying offset event: {}", queryName, offset)
       latestOffset = offset
-    case RecoveryCompleted ⇒
+    case RecoveryCompleted =>
       log.debug("Query: {} has finished recovering to offset: {}", queryName, latestOffset)
       context.system.scheduler.scheduleOnce(0.seconds, self, RecoveredMessage)
   }
 
   override val receiveCommand: Receive = {
-    case RecoveredMessage if totalDemand == 0 ⇒
+    case RecoveredMessage if totalDemand == 0 =>
       context.system.scheduler.scheduleOnce(0.seconds, self, RecoveredMessage)
-    case RecoveredMessage if totalDemand > 0 ⇒
+    case RecoveredMessage if totalDemand > 0 =>
       onNext(latestOffset)
       onCompleteThenStop()
 
@@ -102,10 +102,10 @@ private[persistence] class ResumableQueryWriter(queryName: String, snapshotInter
   log.debug("Creating: '{}': '{}'", queryName, this.hashCode())
 
   override val receiveCommand: Receive = LoggingReceive {
-    case offset: Long ⇒
+    case offset: Long =>
       log.debug("Query: '{}' is saving offset: '{}'", queryName, offset)
-      persist(offset) { _ ⇒
-        snapshotInterval.foreach { interval ⇒
+      persist(offset) { _ =>
+        snapshotInterval.foreach { interval =>
           if (lastSequenceNr != 0L && lastSequenceNr % interval == 0)
             saveSnapshot(offset)
         }

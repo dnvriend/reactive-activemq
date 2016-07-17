@@ -43,39 +43,39 @@ object Journal {
   /**
    * Returns a [[akka.stream.scaladsl.Flow]] that writes messages to a configured akka-persistence-journal
    */
-  def apply[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
+  def apply[A](tags: Any => Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
     flow(tags, journalPluginId)
 
   /**
    * Returns an [[akka.stream.scaladsl.Flow]] that writes messages to the akka-persistence-journal.
    */
-  def flow[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
-    Flow[A].mapAsync(1) { element ⇒
+  def flow[A](tags: Any => Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, timeout: Timeout): Flow[A, A, NotUsed] =
+    Flow[A].mapAsync(1) { element =>
       import akka.pattern.ask
       val writer = system.actorOf(Props(new JournalActor(tags, journalPluginId)))
-      (writer ? element).map(_ ⇒ element)
+      (writer ? element).map(_ => element)
     }
 
   /**
    * Returns an [[akka.stream.scaladsl.Sink]] that writes messages to the akka-persistence-journal.
    */
-  def sink[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = ""): Sink[A, ActorRef] =
+  def sink[A](tags: Any => Set[String] = empty, journalPluginId: String = ""): Sink[A, ActorRef] =
     Sink.actorSubscriber[A](Props(new JournalActorSubscriber[A](tags, journalPluginId)))
 
   /**
    * Returns a [[akka.stream.scaladsl.Flow]] that writes messages to a configured akka-persistence-journal
    */
-  def flowDirect[A](tags: Any ⇒ Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, mat: Materializer): Flow[A, A, NotUsed] =
-    Flow[A].map { payload ⇒
+  def flowDirect[A](tags: Any => Set[String] = empty, journalPluginId: String = "")(implicit system: ActorSystem, ec: ExecutionContext, mat: Materializer): Flow[A, A, NotUsed] =
+    Flow[A].map { payload =>
       val journal = Persistence(system).journalFor(journalPluginId)
       val tp = TestProbe()
       val xs: Seq[PersistentEnvelope] = Seq(AtomicWrite(createRepr(payload, tags(payload))))
       val cmd = WriteMessages(xs, tp.ref, 1)
       tp.send(journal, cmd)
       tp.expectMsgPF() {
-        case WriteMessageFailure(msg, cause, _) ⇒ throw cause
-        case WriteMessagesFailed(cause)         ⇒ throw cause
-        case _                                  ⇒ payload
+        case WriteMessageFailure(msg, cause, _) => throw cause
+        case WriteMessagesFailed(cause)         => throw cause
+        case _                                  => payload
       }
     }
 
@@ -94,16 +94,16 @@ object Journal {
   private def empty(a: Any): Set[String] = Set.empty[String]
 }
 
-private[persistence] class JournalActor(tags: Any ⇒ Set[String], override val journalPluginId: String) extends PersistentActor with ActorLogging {
+private[persistence] class JournalActor(tags: Any => Set[String], override val journalPluginId: String) extends PersistentActor with ActorLogging {
   override val receiveRecover: Receive = PartialFunction.empty
 
   override val persistenceId: String = "JournalWriter-" + UUID.randomUUID().toString
 
   override val receiveCommand: Receive = LoggingReceive {
-    case msg ⇒
+    case msg =>
       val evaluatedTags = tags(msg)
       val msgToPersist = if (evaluatedTags.isEmpty) msg else Tagged(msg, evaluatedTags)
-      persist(msgToPersist)(_ ⇒ sender() ! akka.actor.Status.Success(""))
+      persist(msgToPersist)(_ => sender() ! akka.actor.Status.Success(""))
   }
 
   override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: Long): Unit = {
@@ -117,7 +117,7 @@ private[persistence] class JournalActor(tags: Any ⇒ Set[String], override val 
   }
 }
 
-private[persistence] class JournalActorSubscriber[A](tags: Any ⇒ Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
+private[persistence] class JournalActorSubscriber[A](tags: Any => Set[String], override val journalPluginId: String) extends ActorSubscriber with PersistentActor with ActorLogging {
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
   override val recovery: Recovery = Recovery.none // disable recovery of both events and snapshots
   override val persistenceId: String = "JournalWriter-" + UUID.randomUUID().toString
@@ -125,16 +125,16 @@ private[persistence] class JournalActorSubscriber[A](tags: Any ⇒ Set[String], 
   override val receiveRecover: Receive = PartialFunction.empty
 
   override val receiveCommand: Receive = LoggingReceive {
-    case OnNext(msg) ⇒
+    case OnNext(msg) =>
       val evaluatedTags = tags(msg)
       val msgToPersist = if (evaluatedTags.isEmpty) msg else Tagged(msg, evaluatedTags)
-      persist(msgToPersist)(_ ⇒ request(1))
+      persist(msgToPersist)(_ => request(1))
 
-    case OnComplete ⇒
+    case OnComplete =>
       log.warning("Receiving onComplete, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalPluginId)
       context.stop(self)
 
-    case OnError(cause) ⇒
+    case OnError(cause) =>
       log.error(cause, "Receiving onError, stopping AckJournalSink for journal: {} using journalPluginId: {}", journalPluginId)
       context.stop(self)
   }

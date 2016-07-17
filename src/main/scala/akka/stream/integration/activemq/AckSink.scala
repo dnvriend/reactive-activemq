@@ -28,7 +28,7 @@ object AckSink {
    */
   def seq[T]: Sink[AckUTup[T], Future[Seq[T]]] =
     Flow[AckTup[Unit, T]].map {
-      case (p, a) ⇒
+      case (p, a) =>
         if (!p.isCompleted) p.success(())
         a
     }.toMat(Sink.seq[T])(Keep.right).named("seqAckSink")
@@ -36,14 +36,14 @@ object AckSink {
   /**
    * Creates a sink that acks each message and applies the given function with the received element until upstream terminates.
    */
-  def foreach[A](f: A ⇒ Unit): Sink[AckUTup[A], Future[Done]] =
+  def foreach[A](f: A => Unit): Sink[AckUTup[A], Future[Done]] =
     Flow[AckUTup[A]].map {
-      case (p, a) ⇒
+      case (p, a) =>
         try {
           f(a)
           if (!p.isCompleted) p.success(())
         } catch {
-          case cause: Throwable ⇒
+          case cause: Throwable =>
             if (!p.isCompleted) p.failure(cause)
         }
     }.toMat(Sink.ignore)(Keep.right).named("foreachAckSink")
@@ -53,11 +53,11 @@ object AckSink {
    */
   def complete[A]: Sink[AckTup[A, A], Future[Done]] = {
     Flow[AckTup[A, A]].map {
-      case (p, a) ⇒
+      case (p, a) =>
         try {
           if (!p.isCompleted) p.success(a)
         } catch {
-          case cause: Throwable ⇒
+          case cause: Throwable =>
             if (!p.isCompleted) p.failure(cause)
         }
     }.toMat(Sink.ignore)(Keep.right).named("completeAckSink")

@@ -21,7 +21,7 @@ import java.io.{ File, FileNotFoundException }
 
 import akka.stream.scaladsl.{ Flow, Source }
 import akka.{ Done, NotUsed }
-import org.apache.commons.io.{ FileUtils ⇒ CommonsFileUtils }
+import org.apache.commons.io.{ FileUtils => CommonsFileUtils }
 
 import scala.util.{ Failure, Success, Try }
 
@@ -48,7 +48,7 @@ object FileUtils {
    */
   def moveFileTagged[T]: Flow[(T, FileUtilsCommand.MoveFile), (T, MoveFileResult), NotUsed] =
     Flow[(T, FileUtilsCommand.MoveFile)].flatMapConcat {
-      case (tag, cmd) ⇒ Source.single(cmd).via(moveFile).map((tag, _))
+      case (tag, cmd) => Source.single(cmd).via(moveFile).map((tag, _))
     }
 
   /**
@@ -57,10 +57,10 @@ object FileUtils {
    * When the destination file is on another file system, do a "copy and delete".
    */
   def moveFile: Flow[FileUtilsCommand.MoveFile, MoveFileResult, NotUsed] =
-    Flow[FileUtilsCommand.MoveFile].map { cmd ⇒
+    Flow[FileUtilsCommand.MoveFile].map { cmd =>
       CommonsFileUtils.moveFile(new File(cmd.srcFile), new File(cmd.destFile))
       MoveFileResult(Success(Done))
-    }.recover { case cause: Throwable ⇒ MoveFileResult(Failure(cause)) }
+    }.recover { case cause: Throwable => MoveFileResult(Failure(cause)) }
 
   /**
    * Copies a file to a new location preserving the file date.
@@ -72,7 +72,7 @@ object FileUtils {
    */
   def copyFileTagged[T]: Flow[(T, FileUtilsCommand.CopyFile), (T, CopyFileResult), NotUsed] =
     Flow[(T, FileUtilsCommand.CopyFile)].flatMapConcat {
-      case (tag, cmd) ⇒ Source.single(cmd).via(copyFile).map((tag, _))
+      case (tag, cmd) => Source.single(cmd).via(copyFile).map((tag, _))
     }
 
   /**
@@ -84,10 +84,10 @@ object FileUtils {
    * method will overwrite it.
    */
   def copyFile: Flow[FileUtilsCommand.CopyFile, CopyFileResult, NotUsed] =
-    Flow[FileUtilsCommand.CopyFile].map { cmd ⇒
+    Flow[FileUtilsCommand.CopyFile].map { cmd =>
       CommonsFileUtils.copyFile(new File(cmd.srcFile), new File(cmd.destFile))
       CopyFileResult(Success(Done))
-    }.recover { case cause: Throwable ⇒ CopyFileResult(Failure(cause)) }
+    }.recover { case cause: Throwable => CopyFileResult(Failure(cause)) }
 
   /**
    * Deletes a file. If file is a directory, delete it and all sub-directories.
@@ -98,7 +98,7 @@ object FileUtils {
    */
   def deleteFileOrDirectoryTagged[T]: Flow[(T, FileUtilsCommand.DeleteFileOrDirectory), (T, DeleteFileOrDirectoryResult), NotUsed] =
     Flow[(T, FileUtilsCommand.DeleteFileOrDirectory)].flatMapConcat {
-      case (tag, cmd) ⇒ Source.single(cmd).via(deleteFileOrDirectory).map((tag, _))
+      case (tag, cmd) => Source.single(cmd).via(deleteFileOrDirectory).map((tag, _))
     }
 
   /**
@@ -109,26 +109,26 @@ object FileUtils {
    * </ul>
    */
   def deleteFileOrDirectory: Flow[FileUtilsCommand.DeleteFileOrDirectory, DeleteFileOrDirectoryResult, NotUsed] =
-    Flow[FileUtilsCommand.DeleteFileOrDirectory].map { cmd ⇒
+    Flow[FileUtilsCommand.DeleteFileOrDirectory].map { cmd =>
       CommonsFileUtils.forceDelete(new File(cmd.fileOrDir))
       DeleteFileOrDirectoryResult(Success(Done))
-    }.recover { case cause: Throwable ⇒ DeleteFileOrDirectoryResult(Failure(cause)) }
+    }.recover { case cause: Throwable => DeleteFileOrDirectoryResult(Failure(cause)) }
 
   /**
    * Checks whether or not a file exists
    */
   def existsTagged[T]: Flow[(T, FileUtilsCommand.Exists), (T, FileExistsResult), NotUsed] =
     Flow[(T, FileUtilsCommand.Exists)].flatMapConcat {
-      case (tag, cmd) ⇒ Source.single(cmd).via(exists).map((tag, _))
+      case (tag, cmd) => Source.single(cmd).via(exists).map((tag, _))
     }
 
   /**
    * Checks whether or not a file exists
    */
   def exists: Flow[FileUtilsCommand.Exists, FileExistsResult, NotUsed] =
-    Flow[FileUtilsCommand.Exists].map { cmd ⇒
+    Flow[FileUtilsCommand.Exists].map { cmd =>
       val file = new File(cmd.file)
       if (file.exists() && file.canRead && file.canWrite) FileExistsResult(Success(Done))
       else FileExistsResult(Failure(new FileNotFoundException(s"File '${cmd.file}' does not exists")))
-    }.recover { case cause: Throwable ⇒ FileExistsResult(Failure(cause)) }
+    }.recover { case cause: Throwable => FileExistsResult(Failure(cause)) }
 }

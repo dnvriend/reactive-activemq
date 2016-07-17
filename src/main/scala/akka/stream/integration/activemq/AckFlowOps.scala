@@ -27,30 +27,30 @@ object AckFlowOps {
 
   implicit class SourceOps[A, B](src: Source[AckTup[A, B], NotUsed]) {
 
-    def fmapAck(f: B ⇒ A): Source[AckTup[A, A], NotUsed] = src.map {
-      case (p, b) ⇒
+    def fmapAck(f: B => A): Source[AckTup[A, A], NotUsed] = src.map {
+      case (p, b) =>
         try {
           val a = f(b)
           val out = p → a
           if (!p.isCompleted) p.success(a)
           out
         } catch {
-          case cause: Throwable ⇒
+          case cause: Throwable =>
             if (!p.isCompleted) p.failure(cause)
             throw cause
         }
     }
 
-    def fmap[C](f: B ⇒ C): Source[AckTup[A, C], NotUsed] = src.map {
-      case (p, a) ⇒ p → f(a)
+    def fmap[C](f: B => C): Source[AckTup[A, C], NotUsed] = src.map {
+      case (p, a) => p → f(a)
     }
 
-    def fmapAsync(qos: Int)(f: B ⇒ Future[A])(implicit ec: ExecutionContext): Source[AckTup[A, A], NotUsed] = src.mapAsync(qos) {
-      case (p, b) ⇒ f(b).map { a ⇒
+    def fmapAsync(qos: Int)(f: B => Future[A])(implicit ec: ExecutionContext): Source[AckTup[A, A], NotUsed] = src.mapAsync(qos) {
+      case (p, b) => f(b).map { a =>
         if (!p.isCompleted) p.success(a)
         p → a
       }.recover {
-        case t: Throwable ⇒
+        case t: Throwable =>
           if (!p.isCompleted) p.failure(t)
           throw t
       }
@@ -58,6 +58,6 @@ object AckFlowOps {
   }
 
   implicit class SourceUnitOps[A](src: Source[AckTup[Unit, A], NotUsed]) {
-    def runForeachAck(f: A ⇒ Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreach(f))
+    def runForeachAck(f: A => Unit)(implicit mat: Materializer): Future[Done] = src.runWith(AckSink.foreach(f))
   }
 }

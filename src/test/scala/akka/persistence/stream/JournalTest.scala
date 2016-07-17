@@ -21,12 +21,12 @@ import akka.stream.scaladsl.{ Sink, Source }
 
 class JournalTest extends TestSpec {
   "flow via persistent actor" should "Write 100 messages to the journal" in {
-    Source.repeat("foo").take(100).via(Journal.flow(_ ⇒ Set("foo"))).runWith(Sink.ignore).futureValue
-    journal.currentEventsByTag("foo", 0).runFold(0L) { case (c, e) ⇒ c + 1 }.futureValue shouldBe 100
+    Source.repeat("foo").take(100).via(Journal.flow(_ => Set("foo"))).runWith(Sink.ignore).futureValue
+    journal.currentEventsByTag("foo", 0).runFold(0L) { case (c, e) => c + 1 }.futureValue shouldBe 100
   }
 
   "flow via direct journal" should "Write messages to the journal" in {
-    Source.repeat("foo").take(100).via(Journal.flowDirect(_ ⇒ Set("foo"))).runWith(Sink.ignore).futureValue
-    journal.currentEventsByTag("foo", 0).runFold(0L) { case (c, e) ⇒ c + 1 }.futureValue shouldBe 100
+    Source.repeat("foo").take(100).via(Journal.flowDirect(_ => Set("foo"))).runWith(Sink.ignore).futureValue
+    journal.currentEventsByTag("foo", 0).runFold(0L) { case (c, e) => c + 1 }.futureValue shouldBe 100
   }
 }

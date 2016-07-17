@@ -28,14 +28,14 @@ object AckFlow {
    * Transform this stream by applying the given function to each of the elements
    * as they pass through this processing step, acking each message.
    */
-  def map[A, B](f: A ⇒ B): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].map {
-    case (p, a) ⇒
+  def map[A, B](f: A => B): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].map {
+    case (p, a) =>
       try {
         val out = p → f(a)
         if (!p.isCompleted) p.success(())
         out
       } catch {
-        case cause: Throwable ⇒
+        case cause: Throwable =>
           if (!p.isCompleted) p.failure(cause)
           throw cause
       }
@@ -45,12 +45,12 @@ object AckFlow {
    * Transform this stream by applying the given function to each of the elements
    * as they pass through this processing step, acking each message.
    */
-  def mapAsync[A, B](qos: Int)(f: A ⇒ Future[B])(implicit ec: ExecutionContext): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].mapAsync(qos) {
-    case (p, a) ⇒ f(a).map { b ⇒
+  def mapAsync[A, B](qos: Int)(f: A => Future[B])(implicit ec: ExecutionContext): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].mapAsync(qos) {
+    case (p, a) => f(a).map { b =>
       if (!p.isCompleted) p.success(())
       p → b
     }.recover {
-      case t: Throwable ⇒
+      case t: Throwable =>
         if (!p.isCompleted) p.failure(t)
         throw t
     }
@@ -59,14 +59,14 @@ object AckFlow {
   /**
    * Only pass on those elements that satisfy the given predicate, acking each message.
    */
-  def filter[A](predicate: A ⇒ Boolean): Flow[AckUTup[A], AckUTup[A], NotUsed] = Flow[AckUTup[A]].filter {
-    case (p, a) ⇒
+  def filter[A](predicate: A => Boolean): Flow[AckUTup[A], AckUTup[A], NotUsed] = Flow[AckUTup[A]].filter {
+    case (p, a) =>
       try {
         val bool = predicate(a)
         if (!p.isCompleted) p.success(())
         bool
       } catch {
-        case t: Throwable ⇒
+        case t: Throwable =>
           if (!p.isCompleted) p.failure(t)
           throw t
       }

@@ -25,11 +25,11 @@ import org.scalatest.BeforeAndAfterAll
 
 import scala.util.Try
 
-trait LeveldbCleanup extends BeforeAndAfterAll { _: TestSpec ⇒
+trait LeveldbCleanup extends BeforeAndAfterAll { _: TestSpec =>
   lazy val storageLocations = List(
     "akka.persistence.journal.leveldb.dir",
     "akka.persistence.snapshot-store.local.dir"
-  ).map(s ⇒ new File(system.settings.config.getString(s)))
+  ).map(s => new File(system.settings.config.getString(s)))
 
   override protected def beforeAll() {
     super.beforeAll()

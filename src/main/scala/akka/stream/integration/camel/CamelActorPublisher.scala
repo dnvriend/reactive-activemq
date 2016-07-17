@@ -28,12 +28,12 @@ class CamelActorPublisher(val endpointUri: String) extends Consumer with ActorPu
   override val autoAck: Boolean = false
 
   override def receive: Receive = LoggingReceive {
-    case CamelMessage if totalDemand == 0 ⇒
+    case CamelMessage if totalDemand == 0 =>
       sender() ! akka.actor.Status.Failure(new IllegalStateException("No demand for new messages"))
 
-    case msg: CamelMessage ⇒ onNext((sender(), msg))
+    case msg: CamelMessage => onNext((sender(), msg))
 
-    case Cancel            ⇒ context stop self
+    case Cancel            => context stop self
   }
 }
 
@@ -41,19 +41,19 @@ class CamelActorPublisherWithExtractor[A](val endpointUri: String)(implicit extr
   override val autoAck: Boolean = false
 
   override def receive: Receive = LoggingReceive {
-    case CamelMessage if totalDemand == 0 ⇒
+    case CamelMessage if totalDemand == 0 =>
       sender() ! akka.actor.Status.Failure(new IllegalStateException("No demand for new messages"))
 
-    case msg: CamelMessage ⇒
+    case msg: CamelMessage =>
       try {
         onNext((sender(), extractor.extract(msg)))
       } catch {
-        case t: Throwable ⇒
+        case t: Throwable =>
           log.error(t, "Removing message from the broker because of error while extracting the message")
           sender() ! akka.camel.Ack
       }
 
-    case Cancel ⇒ context stop self
+    case Cancel => context stop self
   }
 }
 

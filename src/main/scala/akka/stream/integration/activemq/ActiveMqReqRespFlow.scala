@@ -60,9 +60,9 @@ object ActiveMqReqRespFlow {
     applyMat(source, sink)(Keep.none)
   }
 
-  def applyMat[S, T, M1, M2, Mat](source: Source[AckTup[T, S], M1], sink: Sink[AckTup[T, T], M2])(combineMat: (M1, M2) ⇒ Mat)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, Mat] = {
+  def applyMat[S, T, M1, M2, Mat](source: Source[AckTup[T, S], M1], sink: Sink[AckTup[T, T], M2])(combineMat: (M1, M2) => Mat)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, Mat] = {
 
-    Flow.fromGraph(GraphDSL.create(source, sink)(combineMat) { implicit b ⇒ (src, snk) ⇒
+    Flow.fromGraph(GraphDSL.create(source, sink)(combineMat) { implicit b => (src, snk) =>
       import GraphDSL.Implicits._
 
       val bidi = b.add(AckBidiFlow[Promise[T], S, T]())

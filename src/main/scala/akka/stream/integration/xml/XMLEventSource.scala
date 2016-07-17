@@ -22,12 +22,12 @@ import java.io.{ BufferedInputStream, File, FileInputStream, InputStream }
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 
-import scala.io.{ Source ⇒ ScalaIOSource }
+import scala.io.{ Source => ScalaIOSource }
 import scala.xml.pull.{ XMLEvent, XMLEventReader }
 
 object XMLEventSource {
   def fromInputStream(xml: InputStream): Source[XMLEvent, NotUsed] =
-    Source.fromIterator(() ⇒ new XMLEventReader(ScalaIOSource.fromInputStream(xml)))
+    Source.fromIterator(() => new XMLEventReader(ScalaIOSource.fromInputStream(xml)))
 
   def fromFile(file: File): Source[XMLEvent, NotUsed] =
     fromInputStream(new BufferedInputStream(new FileInputStream(file)))

@@ -27,14 +27,14 @@ import JsonMessageExtractor._
 
 class ActiveMqProducerTest extends TestSpec {
   it should "produce messages to a queue" in {
-    withTestTopicSubscriber() { sub ⇒
-      withTestTopicPublisher() { pub ⇒
+    withTestTopicSubscriber() { sub =>
+      withTestTopicPublisher() { pub =>
         pub.sendNext(testPerson1)
         pub.sendComplete()
 
         sub.request(1)
         sub.expectNextPF {
-          case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
+          case (p: Promise[Unit], `testPerson1`) => p.success(())
         }
 
         sub.expectNoMsg(500.millis)
@@ -44,14 +44,14 @@ class ActiveMqProducerTest extends TestSpec {
   }
 
   it should "produce multiple messages to a queue" in {
-    withTestTopicSubscriber() { sub ⇒
-      withTestTopicPublisher() { pub ⇒
+    withTestTopicSubscriber() { sub =>
+      withTestTopicPublisher() { pub =>
 
-        (0 to 10).foreach { _ ⇒
+        (0 to 10).foreach { _ =>
           pub.sendNext(testPerson1)
           sub.request(1)
           sub.expectNextPF {
-            case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
+            case (p: Promise[Unit], `testPerson1`) => p.success(())
           }
         }
         pub.sendComplete()

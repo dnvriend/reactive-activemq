@@ -29,10 +29,10 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   behavior of "ActiveMqReqRespFlow"
 
   it should "support request-response for a single message" in {
-    withBackendFlow { implicit backendFlow ⇒ flowProbe ⇒
-      withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow ⇒
-        withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub ⇒
-          withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub ⇒
+    withBackendFlow { implicit backendFlow => flowProbe =>
+      withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
+        withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
+          withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>
 
             // echo all received messages
             flowProbe.setAutoPilot(identity[Person] _)
@@ -42,7 +42,7 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
             pub.sendNext(testPerson1)
 
             sub.expectNextPF {
-              case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
+              case (p: Promise[Unit], `testPerson1`) => p.success(())
             }
 
             sub.cancel()
@@ -54,10 +54,10 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   }
 
   it should "support request-response for a multiple messages" in {
-    withBackendFlow { implicit backendFlow ⇒ flowProbe ⇒
-      withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow ⇒
-        withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub ⇒
-          withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub ⇒
+    withBackendFlow { implicit backendFlow => flowProbe =>
+      withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
+        withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
+          withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>
 
             // echo all received messages
             flowProbe.setAutoPilot(identity[Person] _)
@@ -67,12 +67,12 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
 
             pub.sendNext(testPerson1)
             sub.expectNextPF {
-              case (p: Promise[Unit], `testPerson1`) ⇒ p.success(())
+              case (p: Promise[Unit], `testPerson1`) => p.success(())
             }
 
             pub.sendNext(testPerson2)
             sub.expectNextPF {
-              case (p: Promise[Unit], `testPerson2`) ⇒ p.success(())
+              case (p: Promise[Unit], `testPerson2`) => p.success(())
             }
 
             sub.cancel()

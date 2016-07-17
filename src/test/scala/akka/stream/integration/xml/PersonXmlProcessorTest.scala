@@ -21,7 +21,7 @@ import scala.concurrent.duration._
 
 class PersonXmlProcessorTest extends TestSpec {
   it should "process full person" in {
-    withTestXMLPersonParser()(PersonsXmlFile) { tp ⇒
+    withTestXMLPersonParser()(PersonsXmlFile) { tp =>
       tp.request(1)
       tp.expectNext(testPerson1)
       tp.expectNoMsg(100.millis)
@@ -29,10 +29,10 @@ class PersonXmlProcessorTest extends TestSpec {
   }
 
   it should "count a lot of persons" in {
-    withInputStream(LotOfPersonsXmlFile) { is ⇒
+    withInputStream(LotOfPersonsXmlFile) { is =>
       XMLEventSource.fromInputStream(is)
         .via(PersonParser())
-        .runFold(0) { case (c, _) ⇒ c + 1 }
+        .runFold(0) { case (c, _) => c + 1 }
         .futureValue shouldBe 4400
     }
   }

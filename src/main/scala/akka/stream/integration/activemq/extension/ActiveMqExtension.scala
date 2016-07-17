@@ -39,7 +39,7 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
 
   import scala.collection.JavaConversions._
 
-  system.settings.config.getStringList("reactive-activemq.connections").foreach { componentName ⇒
+  system.settings.config.getStringList("reactive-activemq.connections").foreach { componentName =>
     val amqConfig = ActiveMqConfig(system.settings.config.getConfig(componentName))
     createComponent(componentName, amqConfig)
   }

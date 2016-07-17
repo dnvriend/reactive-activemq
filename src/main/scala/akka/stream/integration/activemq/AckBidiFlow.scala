@@ -39,7 +39,7 @@ object AckBidiFlow {
     overflowStrategy: OverflowStrategy = OverflowStrategy.backpressure
   ): BidiFlow[(R, S), S, T, (R, T), NotUsed] = {
 
-    BidiFlow.fromGraph(GraphDSL.create() { implicit b ⇒
+    BidiFlow.fromGraph(GraphDSL.create() { implicit b =>
       import GraphDSL.Implicits._
 
       val unzip = b.add(Unzip[R, S])

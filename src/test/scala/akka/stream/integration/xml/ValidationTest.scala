@@ -19,19 +19,19 @@ package xml
 
 class ValidationTest extends TestSpec {
   it should "validate xml/persons.xml" in {
-    withByteStringSource("xml/persons.xml") { src ⇒
+    withByteStringSource("xml/persons.xml") { src =>
       src.runWith(Validation.sink("xml/persons.xsd")).futureValue.status should be a 'success
     }
   }
 
   it should "validate xml/invalid-persons.xml" in {
-    withByteStringSource("xml/invalid-persons.xml") { src ⇒
+    withByteStringSource("xml/invalid-persons.xml") { src =>
       src.runWith(Validation.sink("xml/persons.xsd")).futureValue.status should be a 'failure
     }
   }
 
   it should "validate xml/lot-of-persons.xml" in {
-    withByteStringSource("xml/lot-of-persons.xml") { src ⇒
+    withByteStringSource("xml/lot-of-persons.xml") { src =>
       src.runWith(Validation.sink("xml/persons.xsd")).futureValue.status should be a 'success
     }
   }

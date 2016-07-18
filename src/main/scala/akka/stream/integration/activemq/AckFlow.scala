@@ -31,7 +31,7 @@ object AckFlow {
   def map[A, B](f: A => B): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].map {
     case (p, a) =>
       try {
-        val out = p → f(a)
+        val out = p => f(a)
         if (!p.isCompleted) p.success(())
         out
       } catch {
@@ -48,7 +48,7 @@ object AckFlow {
   def mapAsync[A, B](qos: Int)(f: A => Future[B])(implicit ec: ExecutionContext): Flow[AckUTup[A], AckUTup[B], NotUsed] = Flow[AckUTup[A]].mapAsync(qos) {
     case (p, a) => f(a).map { b =>
       if (!p.isCompleted) p.success(())
-      p → b
+      p => b
     }.recover {
       case t: Throwable =>
         if (!p.isCompleted) p.failure(t)

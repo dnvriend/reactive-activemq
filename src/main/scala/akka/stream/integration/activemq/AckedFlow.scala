@@ -42,8 +42,8 @@ private[activemq] class AckedFlow[A, B](implicit ec: ExecutionContext) extends G
           case cause: Throwable =>
             ref ! akka.actor.Status.Failure(cause)
         }
-        promises = promises.filterNot(_._1.isCompleted) :+ (p → eventualResponse)
-        push(out, p → b)
+        promises = promises.filterNot(_._1.isCompleted) :+ (p => eventualResponse)
+        push(out, p => b)
       }
     })
 

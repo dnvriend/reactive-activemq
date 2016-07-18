@@ -31,7 +31,7 @@ object AckFlowOps {
       case (p, b) =>
         try {
           val a = f(b)
-          val out = p → a
+          val out = p => a
           if (!p.isCompleted) p.success(a)
           out
         } catch {
@@ -42,13 +42,13 @@ object AckFlowOps {
     }
 
     def fmap[C](f: B => C): Source[AckTup[A, C], NotUsed] = src.map {
-      case (p, a) => p → f(a)
+      case (p, a) => p => f(a)
     }
 
     def fmapAsync(qos: Int)(f: B => Future[A])(implicit ec: ExecutionContext): Source[AckTup[A, A], NotUsed] = src.mapAsync(qos) {
       case (p, b) => f(b).map { a =>
         if (!p.isCompleted) p.success(a)
-        p → a
+        p => a
       }.recover {
         case t: Throwable =>
           if (!p.isCompleted) p.failure(t)

@@ -27,7 +27,7 @@ class SeqPromisesTest extends TestSpec {
     val f = p.future
     f.onComplete(complete)
     f.onFailure(failure)
-    p → f
+    p => f
   }
 
   def withPromises()(f: Seq[(Promise[Unit], Future[Unit])] => Unit): Unit = f(Seq(

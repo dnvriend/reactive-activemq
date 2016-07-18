@@ -16,7 +16,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.22"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.23"
 ```
 
 ## Contribution policy ##
@@ -28,6 +28,9 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.23 (2016-07-18)
+  - Split the io, xml and persistence extensions to a new project called 'akka-persistence-query-extensions', which is of course unofficial.
+
 - v0.0.22 (2016-07-15)
   - Resumable Query; should wait for demand then send the latest offset.
 

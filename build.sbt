@@ -33,18 +33,12 @@ libraryDependencies ++= {
   val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
   Seq(
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-query-experimental" % akkaVersion,
     "org.apache.activemq" % "activemq-camel" % activeMqVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
-    "commons-io" % "commons-io" % "2.5",
-//    "org.apache.activemq" % "activemq-all" % "5.9.1" % Test,
-    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.3.2" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,
@@ -80,24 +74,3 @@ headers := Map(
 )
 
 enablePlugins(AutomateHeaderPlugin)
-
-lazy val readme = scalatex.ScalatexReadme(
-  projectId = "readme",
-  wd = file(""),
-  url = "https://github.com/lihaoyi/scalatags/tree/master",
-  source = "Readme",
-  autoResources = Seq("reactive-amq.png")
-).settings(
-  scalaVersion := "2.11.8",
-  publish := (),
-  publishLocal := (),
-  publishArtifact := false
-//  ,
-//  (run in Compile) <<= (run in Compile).dependsOn(Def.task{
-//    sbt.IO.createDirectory(baseDirectory.value/".."/"target"/"scala-2.11"/"classes"/"readme")
-//    sbt.IO.copyDirectory(
-//      (target in Compile).value/"scalatex",
-//      baseDirectory.value/".."/"target"/"scala-2.11"/"classes"/"readme",
-//      overwrite = true)
-//  })
-)

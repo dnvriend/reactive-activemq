@@ -21,9 +21,10 @@ import java.util.UUID
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
-import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.scaladsl._
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.integration.JsonMessageBuilder._
+import akka.stream.integration.JsonMessageExtractor._
+import akka.stream.integration.activemq.{ ActiveMqConsumer, ActiveMqProducer }
+import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
@@ -31,18 +32,10 @@ import akka.util.Timeout
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import spray.json.DefaultJsonProtocol
-import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
-import akka.stream.integration.activemq.{ ActiveMqConsumer, ActiveMqProducer }
-import akka.stream.integration.xml.{ PersonParser, XMLEventSource }
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
-import scala.xml.pull.XMLEvent
-import JsonMessageExtractor._
-import JsonMessageBuilder._
-import akka.persistence.Persistence
-import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 
 object PersonDomain extends DefaultJsonProtocol {
 
@@ -62,7 +55,6 @@ trait TestSpec extends FlatSpec
     with OptionValues
     with Eventually
     with BrokerResources
-    with InMemoryCleanup
     with ClasspathResources {
 
   import PersonDomain._
@@ -73,12 +65,6 @@ trait TestSpec extends FlatSpec
   val log: LoggingAdapter = Logging(system, this.getClass)
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
   implicit val timeout = Timeout(30.seconds)
-
-  val writeJournal = Persistence(system).journalFor(null)
-
-  val journal = PersistenceQuery(system)
-    .readJournalFor(InMemoryReadJournal.Identifier)
-    .asInstanceOf[ReadJournal with CurrentEventsByPersistenceIdQuery with EventsByTagQuery with CurrentEventsByTagQuery with EventsByPersistenceIdQuery]
 
   val testPerson1 = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
   val testPerson2 = Person("Anon", "Ymous", 42, Address("Here", "1337", "12345", "InUrBase"))
@@ -109,18 +95,6 @@ trait TestSpec extends FlatSpec
     f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
   }
 
-  def withTestXMLEventSource(within: FiniteDuration = 60.seconds)(filename: String)(f: TestSubscriber.Probe[XMLEvent] => Unit): Unit =
-    withInputStream(filename) { is =>
-      val tp = XMLEventSource.fromInputStream(is).runWith(TestSink.probe[XMLEvent])
-      tp.within(within)(f(tp))
-    }
-
-  def withTestXMLPersonParser(within: FiniteDuration = 5.seconds)(filename: String)(f: TestSubscriber.Probe[Person] => Unit): Unit =
-    withInputStream(filename) { is =>
-      val tp = XMLEventSource.fromInputStream(is).via(PersonParser()).runWith(TestSink.probe[Person])
-      tp.within(within)(f(tp))
-    }
-
   implicit class SourceOps[A](src: Source[A, NotUsed]) {
     def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit = {
       val tp = src.runWith(TestSink.probe(system))
@@ -128,12 +102,7 @@ trait TestSpec extends FlatSpec
     }
   }
 
-  Source(List(1, 2, 3)).runWith(Sink.seq)
-
   def randomId = UUID.randomUUID.toString
-
-  def countJournal(pid: String): Future[Int] =
-    journal.currentEventsByPersistenceId(pid, 0, Long.MaxValue).runWith(Sink.seq).map(_.size)
 
   override protected def afterAll(): Unit = {
     system.terminate().toTry should be a 'success

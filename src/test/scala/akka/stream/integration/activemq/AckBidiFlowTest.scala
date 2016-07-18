@@ -39,7 +39,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
 
         flowProbe.reply(testPerson1)
 
-        val outputPromise = outputProbe.expectNextPF { case (p: Promise[Unit], `testPerson1`) => p }
+        val outputPromise = outputProbe.expectNextPF { case (p: Promise[_], `testPerson1`) => p }
 
         inputPromise should equal(outputPromise)
       }

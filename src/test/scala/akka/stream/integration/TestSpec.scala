@@ -82,24 +82,18 @@ trait TestSpec extends FlatSpec
     def toTry: Try[T] = Try(self.futureValue)
   }
 
-  def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] => Unit): Unit = {
+  def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] => Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
-  }
 
-  def withTestTopicSubscriber(endpoint: String = "PersonConsumer", within: FiniteDuration = 10.seconds)(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit = {
-    val tp = ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]])
-    tp.within(within)(f(tp))
-  }
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit =
+    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]]))
 
-  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit = {
+  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit =
     f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
-  }
 
   implicit class SourceOps[A](src: Source[A, NotUsed]) {
-    def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit = {
-      val tp = src.runWith(TestSink.probe(system))
-      f(tp)
-    }
+    def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit =
+      f(src.runWith(TestSink.probe(system)))
   }
 
   def randomId = UUID.randomUUID.toString

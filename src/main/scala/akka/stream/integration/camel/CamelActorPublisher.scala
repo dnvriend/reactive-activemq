@@ -37,7 +37,7 @@ class CamelActorPublisher(val endpointUri: String) extends Consumer with ActorPu
   }
 }
 
-class CamelActorPublisherWithExtractor[A](val endpointUri: String)(implicit extractor: MessageExtractor[CamelMessage, A]) extends Consumer with ActorPublisher[(ActorRef, A)] with ActorLogging {
+class CamelActorPublisherWithExtractor[A: CamelMessageExtractor](val endpointUri: String) extends Consumer with ActorPublisher[(ActorRef, A)] with ActorLogging {
   override val autoAck: Boolean = false
 
   override def receive: Receive = LoggingReceive {
@@ -46,7 +46,7 @@ class CamelActorPublisherWithExtractor[A](val endpointUri: String)(implicit extr
 
     case msg: CamelMessage =>
       try {
-        onNext((sender(), extractor.extract(msg)))
+        onNext((sender(), implicitly[CamelMessageExtractor[A]].extract(msg)))
       } catch {
         case t: Throwable =>
           log.error(t, "Removing message from the broker because of error while extracting the message")
@@ -61,6 +61,6 @@ object CamelActorPublisher {
   def fromEndpointUri(endpointUri: String): Source[AckRefTup[CamelMessage], ActorRef] =
     Source.actorPublisher[AckRefTup[CamelMessage]](Props(new CamelActorPublisher(endpointUri)))
 
-  def fromEndpointUriWithExtractor[A](endpointUri: String)(implicit extractor: MessageExtractor[CamelMessage, A]): Source[AckRefTup[A], ActorRef] =
+  def fromEndpointUriWithExtractor[A: CamelMessageExtractor](endpointUri: String): Source[AckRefTup[A], ActorRef] =
     Source.actorPublisher[AckRefTup[A]](Props(new CamelActorPublisherWithExtractor(endpointUri)))
 }

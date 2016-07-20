@@ -55,6 +55,6 @@ object ActiveMqProducer {
   /**
    * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def apply[A: CamelMessageBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
+  def apply[A: CamelMessageBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Sink[A, Future[Done]] =
     sink(producerName, qos)
 }

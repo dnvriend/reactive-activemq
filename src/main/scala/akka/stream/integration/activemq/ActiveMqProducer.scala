@@ -29,17 +29,16 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object ActiveMqProducer {
 
-  private def send[A: CamelMessageBuilder: HeadersBuilder](payload: A, producerName: String, endpointUri: String, producer: ProducerTemplate)(implicit ec: ExecutionContext): Future[A] = Future {
+  private def send[A: CamelMessageBuilder](payload: A, producerName: String, endpointUri: String, producer: ProducerTemplate)(implicit ec: ExecutionContext): Future[A] = Future {
     val msg: CamelMessage = implicitly[CamelMessageBuilder[A]].build(payload)
-    val headers: Map[String, AnyRef] = implicitly[HeadersBuilder[A]].build(payload).mapValues(_.asInstanceOf[AnyRef])
-    producer.sendBodyAndHeaders(endpointUri, msg.body, headers)
+    producer.sendBodyAndHeaders(endpointUri, msg.body, msg.headers.mapValues(_.asInstanceOf[AnyRef]))
     payload
   }
 
   /**
    * Creates a flow that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def flow[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[A, A, NotUsed] = {
+  def flow[A: CamelMessageBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[A, A, NotUsed] = {
     Flow[A].mapAsync(qos) { payload =>
       val producerTemplate = CamelExtension(system).template
       val endpointUri = ActiveMqExtension(system).producerEndpointUri(producerName)
@@ -50,12 +49,12 @@ object ActiveMqProducer {
   /**
    * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def sink[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Sink[A, Future[Done]] =
+  def sink[A: CamelMessageBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Sink[A, Future[Done]] =
     flow(producerName, qos).toMat(Sink.ignore)(Keep.right)
 
   /**
    * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def apply[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
+  def apply[A: CamelMessageBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
     sink(producerName, qos)
 }

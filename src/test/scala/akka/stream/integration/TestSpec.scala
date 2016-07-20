@@ -21,8 +21,6 @@ import java.util.UUID
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.{ Logging, LoggingAdapter }
-import akka.stream.integration.JsonMessageBuilder._
-import akka.stream.integration.JsonMessageExtractor._
 import akka.stream.integration.activemq.{ ActiveMqConsumer, ActiveMqProducer }
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
@@ -38,13 +36,15 @@ import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.Try
 
 object PersonDomain extends DefaultJsonProtocol {
-
   final case class Address(street: String = "", houseNumber: String = "", zipCode: String = "", city: String = "")
-
   final case class Person(firstName: String = "", lastName: String = "", age: Int = 0, address: Address = Address())
 
   implicit val jsonAddressFormat = jsonFormat4(Address)
   implicit val jsonPersonFormat = jsonFormat4(Person)
+
+  implicit val noHeadersBuilder = NoHeadersBuilder.noHeadersBuilder[Person]
+  implicit val personCamelMessageBuilder = JsonCamelMessageBuilder.jsonMessageBuilder[Person]
+  implicit val personCamelMessageExtractor = JsonCamelMessageExtractor.jsonMessageExtractor[Person]
 }
 
 trait TestSpec extends FlatSpec

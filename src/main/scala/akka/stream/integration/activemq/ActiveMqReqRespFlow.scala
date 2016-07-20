@@ -77,8 +77,6 @@ object ActiveMqReqRespFlow {
   /**
    * Create a bidi-flow that is linked up to an ActiveMqSource that is expected to execute a request-response pattern
    */
-  def apply[S, T](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, S],
-    builder: MessageBuilder[T, CamelMessage]): Flow[T, S, NotUsed] = {
+  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] =
     apply(ActiveMqConsumer[T, S](consumerName), AckSink.complete[T])
-  }
 }

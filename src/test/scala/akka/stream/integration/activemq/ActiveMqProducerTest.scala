@@ -22,8 +22,6 @@ import akka.stream.scaladsl.Source
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
-import JsonMessageBuilder._
-import JsonMessageExtractor._
 
 class ActiveMqProducerTest extends TestSpec {
   it should "produce messages to a queue" in {
@@ -61,7 +59,6 @@ class ActiveMqProducerTest extends TestSpec {
   }
 
   it should "send 250 messages to the queue" in {
-    import JsonMessageBuilder._
     import PersonDomain._
     val numberOfPersons = 250
     Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqProducer("PersonProducer")).toTry should be a 'success
@@ -72,11 +69,4 @@ class ActiveMqProducerTest extends TestSpec {
     Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqProducer[Person]("PersonProducer")).toTry should be a 'success
     ActiveMqConsumer[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
   }
-
-  //  it should "copy messages from queue and put on topic" in {
-  //    Source.repeat(testPerson1).take(10).runWith(ActiveMqProducer[Person]("PersonProducer"))
-  //    eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.Person").value shouldBe 10)
-  //    ActiveMqConsumer[Person]("PersonConsumer").take(10).runWith(AckActiveMqProducer[Person]("PersonCopyProducer")).futureValue
-  //        eventually(getQueueMessageCount("Consumer.PersonConsumer.VirtualTopic.PersonCopy").value shouldBe 10)
-  //  }
 }

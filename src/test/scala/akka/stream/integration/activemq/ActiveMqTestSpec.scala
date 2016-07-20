@@ -25,8 +25,8 @@ import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.testkit.TestActor.AutoPilot
 import akka.testkit.TestProbe
-import JsonMessageExtractor._
-import JsonMessageBuilder._
+import JsonCamelMessageExtractor._
+import JsonCamelMessageBuilder._
 
 import scala.util.{ Failure, Success, Try }
 /**

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package akka.stream
-package integration
+package akka.stream.integration
 
-trait MessageBuilder[In, Out] {
-  def build(in: In): Out
+import com.google.protobuf.Message
+
+trait ProtobufReader[A] {
+  def read(proto: Message): A
 }

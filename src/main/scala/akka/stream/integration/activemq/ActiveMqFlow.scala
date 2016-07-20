@@ -76,9 +76,6 @@ object ActiveMqFlow {
   /**
    * Create a bidi-flow that is linked up to an ActiveMqSource and ActiveMqSink by their configuration name
    */
-  def apply[S, T](consumerName: String, producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, extractor: MessageExtractor[CamelMessage, S],
-    builder: MessageBuilder[T, CamelMessage]): Flow[T, S, NotUsed] = {
+  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String, producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] =
     ActiveMqFlow(ActiveMqConsumer[S](consumerName), AckActiveMqProducer[T](producerName, qos))
-  }
-
 }

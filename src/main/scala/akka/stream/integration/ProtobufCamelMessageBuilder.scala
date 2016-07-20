@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-package akka.stream
-package integration
+package akka.stream.integration
 
-trait MessageBuilder[In, Out] {
-  def build(in: In): Out
+import akka.camel.CamelMessage
+import com.google.protobuf.Message
+
+trait ProtobufCamelMessageBuilder {
+  implicit def protoMessageBuilder[In: ProtobufWriter](implicit headersBuilder: HeadersBuilder[In] = null) = new CamelMessageBuilder[In] {
+    override def build(in: In): CamelMessage = {
+      val protobufMessage: Message = implicitly[ProtobufWriter[In]].write(in)
+      val headers: Map[String, Any] = Option(headersBuilder).map(_.build(in)).getOrElse(Map.empty[String, Any])
+      CamelMessage(protobufMessage, headers)
+    }
+  }
 }

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package akka.stream
-package integration
+package akka.stream.integration
 
-trait MessageBuilder[In, Out] {
-  def build(in: In): Out
-}
+import akka.camel.CamelMessage
+
+trait CamelMessageExtractor[Out] extends MessageExtractor[CamelMessage, Out]

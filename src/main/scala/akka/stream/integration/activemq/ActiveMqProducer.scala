@@ -29,16 +29,17 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 object ActiveMqProducer {
 
-  private def send[A](payload: A, producerName: String, endpointUri: String, producer: ProducerTemplate)(implicit ec: ExecutionContext, builder: MessageBuilder[A, CamelMessage]): Future[A] = Future {
-    val msg = builder.build(payload)
-    producer.sendBodyAndHeaders(endpointUri, msg.body, msg.headers.mapValues(_.asInstanceOf[AnyRef]))
+  private def send[A: CamelMessageBuilder: HeadersBuilder](payload: A, producerName: String, endpointUri: String, producer: ProducerTemplate)(implicit ec: ExecutionContext): Future[A] = Future {
+    val msg: CamelMessage = implicitly[CamelMessageBuilder[A]].build(payload)
+    val headers: Map[String, AnyRef] = implicitly[HeadersBuilder[A]].build(payload).mapValues(_.asInstanceOf[AnyRef])
+    producer.sendBodyAndHeaders(endpointUri, msg.body, headers)
     payload
   }
 
   /**
    * Creates a flow that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def flow[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Flow[A, A, NotUsed] = {
+  def flow[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[A, A, NotUsed] = {
     Flow[A].mapAsync(qos) { payload =>
       val producerTemplate = CamelExtension(system).template
       val endpointUri = ActiveMqExtension(system).producerEndpointUri(producerName)
@@ -46,29 +47,15 @@ object ActiveMqProducer {
     }
   }
 
-  def toA[A, B](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[B, CamelMessage]): Flow[(A, B), A, NotUsed] = Flow[(A, B)].mapAsync(qos) {
-    case (a, b) =>
-      val producerTemplate = CamelExtension(system).template
-      val endpointUri = ActiveMqExtension(system).producerEndpointUri(producerName)
-      send(b, producerName, endpointUri, producerTemplate).map(_ => a)
-  }
-
-  def toB[A, B](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[B, CamelMessage]): Flow[(A, B), B, NotUsed] = Flow[(A, B)].mapAsync(qos) {
-    case (a, b) =>
-      val producerTemplate = CamelExtension(system).template
-      val endpointUri = ActiveMqExtension(system).producerEndpointUri(producerName)
-      send(b, producerName, endpointUri, producerTemplate)
-  }
-
   /**
    * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def sink[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
+  def sink[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Sink[A, Future[Done]] =
     flow(producerName, qos).toMat(Sink.ignore)(Keep.right)
 
   /**
    * Creates a sink that produces messages to a configured ActiveMq producer until upstream terminates.
    */
-  def apply[A](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
+  def apply[A: CamelMessageBuilder: HeadersBuilder](producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem, builder: MessageBuilder[A, CamelMessage]): Sink[A, Future[Done]] =
     sink(producerName, qos)
 }

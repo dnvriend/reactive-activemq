@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-package akka.stream
-package integration
+package akka.stream.integration
 
-trait MessageBuilder[In, Out] {
-  def build(in: In): Out
-}
+trait HeadersExtractor[A] extends MessageExtractor[Map[String, Any], A]

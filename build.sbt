@@ -30,15 +30,14 @@ testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
   val akkaVersion = "2.4.8"
-  val activeMqVersion = "5.9.1"
   val scalazVersion = "7.2.4"
   Seq(
-    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "org.apache.activemq" % "activemq-camel" % activeMqVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
+    "org.apache.activemq" % "activemq-camel" % "5.9.1",
+    "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-4",
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,
@@ -53,7 +52,7 @@ fork in Test := true
 
 parallelExecution in Test := false
 
-licenses +=("Apache-2.0", url("http://opensource.org/licenses/apache2.0.php"))
+licenses += ("Apache-2.0", url("http://opensource.org/licenses/apache2.0.php"))
 
 // enable scala code formatting //
 import scalariform.formatter.preferences._

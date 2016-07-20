@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package akka.stream.integration.extractor
+package akka.stream.integration.builder
 
 import akka.camel.CamelMessage
-import akka.stream.integration.{ MessageExtractor, TestSpec }
-import akka.stream.integration.JsonMessageExtractor._
-import spray.json._
+import akka.stream.integration.{ CamelMessageBuilder, JsonCamelMessageBuilder, TestSpec }
+import spray.json.{ DefaultJsonProtocol, _ }
 
-import scala.compat.Platform
-
-class MessageExtractorTest extends TestSpec with DefaultJsonProtocol {
-
+object JsonMessageBuilderWithoutHeadersTest extends DefaultJsonProtocol {
   case class MessageReceived(fileName: String, timestamp: Long)
   implicit val messageReceivedJsonFormat = jsonFormat2(MessageReceived)
+  implicit val messageReceivedJsonCamelMessageBuilder = JsonCamelMessageBuilder.jsonMessageBuilder[MessageReceived]
+}
 
-  it should "extract a message" in {
-    val msg = MessageReceived("foo.txt", Platform.currentTime)
-    val camelMessage = CamelMessage(msg.toJson.compactPrint, Map.empty)
-    val extracted = implicitly[MessageExtractor[CamelMessage, MessageReceived]].extract(camelMessage)
-    extracted shouldEqual msg
+class JsonMessageBuilderWithoutHeadersTest extends TestSpec {
+  import JsonMessageBuilderWithoutHeadersTest._
+  it should "build a CamelMessage without headers" in {
+    val msg = MessageReceived("fileName.txt", 1)
+    val camelMessage = implicitly[CamelMessageBuilder[MessageReceived]].build(msg)
+    camelMessage shouldEqual CamelMessage(msg.toJson.compactPrint, Map.empty[String, Any])
   }
-
 }

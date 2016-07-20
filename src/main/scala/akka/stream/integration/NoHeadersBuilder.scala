@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package akka.stream
-package integration
+package akka.stream.integration
 
-trait MessageBuilder[In, Out] {
-  def build(in: In): Out
+trait NoHeadersBuilder {
+  implicit def noHeadersBuilder[A] = new HeadersBuilder[A] {
+    override def build(in: A): Map[String, Any] =
+      Map.empty[String, Any]
+  }
 }
+
+object NoHeadersBuilder extends NoHeadersBuilder

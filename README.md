@@ -16,7 +16,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.23"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.24"
 ```
 
 ## Contribution policy ##
@@ -28,6 +28,12 @@ Contributions via GitHub pull requests are gladly accepted from their original a
 This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 # Whats new?
+- v0.0.24 (2016-07-20)
+  - Replaced `MessageExtractor[CamelMessage, A]` with a `CamelMessageExtractor[A]` to make use of the context bound syntax.
+  - Introduced the HeadersBuilder and HeadersExtractor to create headers / extract headers.
+  - Altered the JsonCamelMessageBuilder and JsonCamelMessageExtractor, both support the (optionally) new HeadersBuilder/HeadersExtractor in combination with the Semigroup typeclass to consume / create a CamelMessage,
+  - Added support for sending/receiving `com.google.protobuf.Message`(s) using the `ProtobufCamelMessageBuilder` and `ProtobufCamelMessageExtractor` using the `ProtobufFormat` and HeadersBuilder/HeadersExtractor typeclasses.
+
 - v0.0.23 (2016-07-18)
   - Split the io, xml and persistence extensions to a new project called 'akka-persistence-query-extensions', which is of course unofficial.
 

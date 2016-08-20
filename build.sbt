@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.25-SNAPSHOT"
+version := "0.0.25"
 
 scalaVersion := "2.11.8"
 
@@ -29,15 +29,15 @@ resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-rel
 testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
-  val akkaVersion = "2.4.8"
-  val scalazVersion = "7.2.4"
+  val akkaVersion = "2.4.9"
+  val scalazVersion = "7.2.5"
   Seq(
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "org.apache.activemq" % "activemq-camel" % "5.9.1",
-    "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-4",
+    "com.google.protobuf" % "protobuf-java" % "3.0.0",
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,

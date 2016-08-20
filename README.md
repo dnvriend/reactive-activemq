@@ -14,7 +14,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.24"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.25"
 ```
 
 ## Contribution policy ##
@@ -159,6 +159,9 @@ TBD
 TBD
 
 # Whats new?
+- v0.0.25 (2016-08-20)
+  - Akka 2.4.8 -> 2.4.9
+
 - v0.0.24 (2016-07-20)
   - Replaced `MessageExtractor[CamelMessage, A]` with a `CamelMessageExtractor[A]` to make use of the context bound syntax.
   - Introduced the HeadersBuilder and HeadersExtractor to create headers / extract headers.

@@ -73,7 +73,7 @@ class RecorrelatorBidiFlow[CIn, CMem, Req, Resp](correlator: Correlator[CMem, Re
       @scala.throws[Exception](classOf[Exception])
       override def onPush(): Unit = {
         val (cin, request) = grab(in1)
-        inTransit += correlator.extractRequestCorrelation(request) → cin
+        inTransit += correlator.extractRequestCorrelation(request) -> cin
         push(out1, request)
       }
 
@@ -102,7 +102,7 @@ class RecorrelatorBidiFlow[CIn, CMem, Req, Resp](correlator: Correlator[CMem, Re
             // This is probably a bit drastic
             failStage(new IllegalStateException(s"[$correlationId] Received response without corresponding request"))
           case Some(cin) =>
-            push(out2, (maybeCin.get, response))
+            push(out2, (cin, response))
         }
 
         if(inTransit.isEmpty && isClosed(in1))

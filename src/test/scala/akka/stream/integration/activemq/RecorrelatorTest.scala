@@ -27,8 +27,8 @@ class RecorrelatorTest extends ActiveMqTestSpec {
   behavior of "Recorrelator"
 
   it should "perform a round-trip" in {
-    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow ⇒
-      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe ⇒ beInProbe ⇒ beOutProbe ⇒ feOutProbe ⇒
+    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow =>
+      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe => beInProbe => beOutProbe => feOutProbe =>
 
         val inputPromise = Promise[Unit]()
         val inputMessage = IdentifiedMessage()
@@ -60,8 +60,8 @@ class RecorrelatorTest extends ActiveMqTestSpec {
   }
 
   it should "handle multiple messages" in {
-    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow ⇒
-      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe ⇒ beInProbe ⇒ beOutProbe ⇒ feOutProbe ⇒
+    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow =>
+      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe => beInProbe => beOutProbe => feOutProbe =>
 
         val inputPromise1 = Promise[Unit]()
         val inputPromise2 = Promise[Unit]()
@@ -102,8 +102,8 @@ class RecorrelatorTest extends ActiveMqTestSpec {
   }
 
   it should "handle multiple messages, even if order is disturbed" in {
-    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow ⇒
-      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe ⇒ beInProbe ⇒ beOutProbe ⇒ feOutProbe ⇒
+    withBackEnd[IdentifiedMessage, IdentifiedResponse] { implicit backendFlow =>
+      withRecorrelatorBidiFlow(defaultCorrelator) { feInProbe => beInProbe => beOutProbe => feOutProbe =>
 
         val inputPromise1 = Promise[Unit]()
         val inputPromise2 = Promise[Unit]()
@@ -144,7 +144,7 @@ object RecorrelatorTest {
   case class IdentifiedResponse(id: UUID = UUID.randomUUID())
 
   def withRecorrelatorBidiFlow[C, I, O](correlator: Correlator[C, I, O])
-                              (test: TestPublisher.Probe[AckUTup[I]] ⇒ TestSubscriber.Probe[I] ⇒ TestPublisher.Probe[O] ⇒ TestSubscriber.Probe[AckUTup[O]] ⇒ Any)
+                              (test: TestPublisher.Probe[AckUTup[I]] => TestSubscriber.Probe[I] => TestPublisher.Probe[O] => TestSubscriber.Probe[AckUTup[O]] => Any)
                               (implicit backendFlow: Flow[I, O, (TestSubscriber.Probe[I], TestPublisher.Probe[O])], system: ActorSystem, ec: ExecutionContext, mat: Materializer): Unit = {
 
     val inputSource = TestSource.probe[AckUTup[I]]
@@ -158,7 +158,7 @@ object RecorrelatorTest {
     test(feInProbe)(beInProbe)(beOutProbe)(feOutProbe)
   }
 
-  def withBackEnd[I, O](test: Flow[I, O, (TestSubscriber.Probe[I], TestPublisher.Probe[O])] ⇒ Any)(implicit system: ActorSystem): Unit = {
+  def withBackEnd[I, O](test: Flow[I, O, (TestSubscriber.Probe[I], TestPublisher.Probe[O])] => Any)(implicit system: ActorSystem): Unit = {
     val backEndSink: Sink[I, TestSubscriber.Probe[I]] = TestSink.probe[I]
     val backEndSource: Source[O, TestPublisher.Probe[O]] = TestSource.probe[O]
     val flow: Flow[I, O, (TestSubscriber.Probe[I], TestPublisher.Probe[O])] = Flow.fromSinkAndSourceMat(backEndSink, backEndSource)(Keep.both)
@@ -169,12 +169,12 @@ object RecorrelatorTest {
     /**
       * Use this to extract an identifier from the request that can be used to correlate its response
       */
-    override def extractRequestCorrelation: IdentifiedMessage ⇒ UUID = _.id
+    override def extractRequestCorrelation: IdentifiedMessage => UUID = _.id
 
     /**
       * Use this to extract from a response that can be used to correlate it to the original request
       */
-    override def correlateResponse: IdentifiedResponse ⇒ UUID = _.id
+    override def correlateResponse: IdentifiedResponse => UUID = _.id
   }
 
 }

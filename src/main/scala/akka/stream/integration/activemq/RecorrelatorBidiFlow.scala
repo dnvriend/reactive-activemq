@@ -14,12 +14,12 @@ object RecorrelatorBidiFlow {
     /**
       * Use this to extract an identifier from the request that can be used to correlate its response
       */
-    def extractRequestCorrelation: I ⇒ C
+    def extractRequestCorrelation: I => C
 
     /**
       * Use this to extract from a response that can be used to correlate it to the original request
       */
-    def correlateResponse: O ⇒ C
+    def correlateResponse: O => C
   }
 
   def apply[CIn, CMem, Req, Resp](correlator: Correlator[CMem, Req, Resp]): RecorrelatorBidiFlow[CIn, CMem, Req, Resp] = {
@@ -94,15 +94,16 @@ class RecorrelatorBidiFlow[CIn, CMem, Req, Resp](correlator: Correlator[CMem, Re
       override def onPush(): Unit = {
         val response = grab(in2)
         val correlationId: CMem = correlator.correlateResponse(response)
-        val cin = inTransit.get(correlationId)
-
-        // This is probably a bit drastic
-        if(cin.isEmpty)
-          failStage(new IllegalStateException(s"[$correlationId] Received response without corresponding request"))
-
+        val maybeCin = inTransit.get(correlationId)
         inTransit -= correlationId
 
-        push(out2, (cin.get, response))
+        maybeCin match {
+          case None =>
+            // This is probably a bit drastic
+            failStage(new IllegalStateException(s"[$correlationId] Received response without corresponding request"))
+          case Some(cin) =>
+            push(out2, (maybeCin.get, response))
+        }
 
         if(inTransit.isEmpty && isClosed(in1))
           completeStage()

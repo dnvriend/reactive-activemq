@@ -41,7 +41,7 @@ class ActiveMqProducerSourceTest extends TestSpec {
       withTestTopicSubscriber(poolSize = 1) { sub2 =>
 
         withTestTopicPublisher() { pub =>
-          val testPersons = (1 to 2).map(i ⇒ testPerson2.copy(age = i))
+          val testPersons = (1 to 2).map(i => testPerson2.copy(age = i))
           testPersons foreach pub.sendNext
           pub.sendComplete()
 
@@ -76,7 +76,7 @@ class ActiveMqProducerSourceTest extends TestSpec {
     withTestTopicSubscriber(poolSize = 3) { sub =>
 
       withTestTopicPublisher() { pub =>
-        val testPersons = (1 to 5).map(i ⇒ testPerson2.copy(age = i))
+        val testPersons = (1 to 5).map(i => testPerson2.copy(age = i))
 
         // Make sure all consumers are up before sending messages (otherwise all messages on queue are allocated to a single consumer)
         eventually(consumerCount shouldBe 3)
@@ -91,8 +91,8 @@ class ActiveMqProducerSourceTest extends TestSpec {
 
         List(prom1, prom2, prom3) foreach (_.success(()))
 
-        val (prom4, per4) = sub.expectNextPF { case (p: Promise[Unit], person) if testPersons.contains(person) => (p, person) }
-        val (prom5, per5) = sub.expectNextPF { case (p: Promise[Unit], person) if testPersons.contains(person) => (p, person) }
+        val (prom4, per4) = sub.expectNextPF { case (p: Promise[Unit]@unchecked, person) if testPersons.contains(person) => (p, person) }
+        val (prom5, per5) = sub.expectNextPF { case (p: Promise[Unit]@unchecked, person) if testPersons.contains(person) => (p, person) }
 
         List(prom4, prom5) foreach (_.success(()))
 

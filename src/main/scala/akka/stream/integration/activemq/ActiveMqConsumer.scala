@@ -75,16 +75,16 @@ object ActiveMqConsumer {
     */
   protected def createActorPublishers[A: CamelMessageExtractor](consumerName: String, system: ActorSystem, poolSize: Int = 1): Source[(ActorRef, A), NotUsed] = {
     poolSize match {
-      case 1 ⇒
-        createActorPublisher(consumerName, system).mapMaterializedValue(_ ⇒ NotUsed)
+      case 1 =>
+        createActorPublisher(consumerName, system).mapMaterializedValue(_ => NotUsed)
 
-      case n if n > 1 ⇒
+      case n if n > 1 =>
         val consumer1 = createActorPublisher(consumerName, system)
         val consumer2 = createActorPublisher(consumerName, system)
-        val rest = (1 to n - 2).map(_ ⇒ createActorPublisher(consumerName, system))
+        val rest = (1 to n - 2).map(_ => createActorPublisher(consumerName, system))
         Source.combine(consumer1, consumer2, rest: _*)(Merge(_))
 
-      case n ⇒
+      case n =>
         throw new java.lang.AssertionError(s"Expected positive value for poolSize, but got: $n")
     }
   }

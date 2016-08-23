@@ -29,7 +29,7 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   behavior of "ActiveMqReqRespFlow"
 
   it should "support request-response for a single message" in {
-    withBackendFlow { implicit backendFlow => flowProbe =>
+    withBackendFlow[Person, Person] { implicit backendFlow => flowProbe =>
       withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
         withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
           withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>
@@ -54,7 +54,7 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   }
 
   it should "support request-response for a multiple messages" in {
-    withBackendFlow { implicit backendFlow => flowProbe =>
+    withBackendFlow[Person, Person] { implicit backendFlow => flowProbe =>
       withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
         withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
           withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>

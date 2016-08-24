@@ -85,11 +85,11 @@ trait TestSpec extends FlatSpec
   def withTestTopicPublisher(endpoint: String = "PersonProducer")(f: TestPublisher.Probe[Person] => Unit): Unit =
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
 
-  def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit =
-    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]]))
+  def withTestTopicSubscriber(endpoint: String = "PersonConsumer", poolSize: Int = 1)(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit =
+    f(ActiveMqConsumer[Person](endpoint, poolSize).runWith(TestSink.probe[AckUTup[Person]]))
 
-  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit =
-    f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
+  def withRequestResponseSubscriber(endpoint: String = "PersonConsumer", poolSize: Int = 1)(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit =
+    f(ActiveMqConsumer[Person, Person](endpoint, poolSize).runWith(TestSink.probe[AckTup[Person, Person]]))
 
   implicit class SourceOps[A](src: Source[A, NotUsed]) {
     def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit =

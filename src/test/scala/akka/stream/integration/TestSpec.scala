@@ -64,7 +64,7 @@ trait TestSpec extends FlatSpec
   implicit val ec: ExecutionContext = system.dispatcher
   val log: LoggingAdapter = Logging(system, this.getClass)
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
-  implicit val timeout = Timeout(30.seconds)
+  implicit val timeout = Timeout(60.seconds)
 
   val testPerson1 = Person("Barack", "Obama", 54, Address("Pennsylvania Ave", "1600", "20500", "Washington"))
   val testPerson2 = Person("Anon", "Ymous", 42, Address("Here", "1337", "12345", "InUrBase"))

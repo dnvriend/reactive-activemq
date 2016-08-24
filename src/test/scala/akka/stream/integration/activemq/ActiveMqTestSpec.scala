@@ -19,16 +19,17 @@ package activemq
 
 import akka.NotUsed
 import akka.actor.ActorRef
+import akka.stream.integration.JsonCamelMessageBuilder._
+import akka.stream.integration.JsonCamelMessageExtractor._
 import akka.stream.integration.PersonDomain.Person
-import akka.stream.scaladsl.{ Flow, Keep }
-import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
-import akka.stream.testkit.{ TestPublisher, TestSubscriber }
+import akka.stream.scaladsl.{Flow, Keep}
+import akka.stream.testkit.scaladsl.{TestSink, TestSource}
+import akka.stream.testkit.{TestPublisher, TestSubscriber}
 import akka.testkit.TestActor.AutoPilot
 import akka.testkit.TestProbe
-import JsonCamelMessageExtractor._
-import JsonCamelMessageBuilder._
 
-import scala.util.{ Failure, Success, Try }
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 /**
  * Test fixtures for ActiveMq
  */
@@ -53,10 +54,10 @@ trait ActiveMqTestSpec extends TestSpec {
   /**
    * Creates a back-end flow whose messages can be intercepted using a traditional testprobe
    */
-  def withBackendFlow(test: Flow[Person, Person, NotUsed] => TestProbe => Any): Unit = {
+  def withBackendFlow[S, T: ClassTag](test: Flow[S, T, NotUsed] => TestProbe => Any): Unit = {
     import akka.pattern.ask
     val flowProbe = TestProbe()
-    val backendFlow = Flow[Person].mapAsync(1)(p => (flowProbe.ref ? p).mapTo[Person])
+    val backendFlow = Flow[S].mapAsync(1)(p => (flowProbe.ref ? p).mapTo[T])
     test(backendFlow)(flowProbe)
   }
 

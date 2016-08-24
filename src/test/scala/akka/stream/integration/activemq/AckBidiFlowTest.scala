@@ -17,14 +17,17 @@
 package akka.stream.integration
 package activemq
 
+import akka.stream.integration.PersonDomain.Person
+
 import scala.concurrent.Promise
+import scala.concurrent.duration._
 
 class AckBidiFlowTest extends ActiveMqTestSpec {
 
   behavior of "AckBidiFlow"
 
   it should "propagate an element downstream, and propagate returned elements upstream, wrapped with the initial promise" in {
-    withBackendFlow { implicit backendFlow => flowProbe =>
+    withBackendFlow[Person, Person] { implicit backendFlow => flowProbe =>
       withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise = Promise[Unit]()
@@ -35,7 +38,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
 
         outputProbe.request(1)
 
-        outputProbe.expectNoMsg()
+        outputProbe.expectNoMsg(100.milliseconds)
 
         flowProbe.reply(testPerson1)
 
@@ -47,7 +50,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
   }
 
   it should "zip incoming promises with back-end values" in {
-    withBackendFlow { implicit backendFlow => flowProbe =>
+    withBackendFlow[Person, Person] { implicit backendFlow => flowProbe =>
       withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise1 = Promise[Unit]()
@@ -75,7 +78,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
   }
 
   it should "respect buffer size" in {
-    withBackendFlow { implicit backendFlow => flowProbe =>
+    withBackendFlow[Person, Person] { implicit backendFlow => flowProbe =>
       withAckBidiFlow { inputProbe => outputProbe =>
 
         val inputPromise1 = Promise[Unit]()
@@ -88,7 +91,7 @@ class AckBidiFlowTest extends ActiveMqTestSpec {
         flowProbe.expectMsg(testPerson1)
 
         // assert that buffer-size of 1 is respected
-        flowProbe.expectNoMsg()
+        flowProbe.expectNoMsg(100.milliseconds)
       }
     }
   }

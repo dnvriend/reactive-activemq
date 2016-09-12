@@ -65,14 +65,17 @@ trait ActiveMqTestSpec extends TestSpec {
    *
    * NOTE: Test using this fixture assume correct implementation of ActiveMqSource and ActiveMqSink!
    */
-  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)(test: Flow[Person, Person, NotUsed] => Any): Unit =
-    test(ActiveMqFlow[Person, Person](sourceEndpoint, sinkEndpoint))
+  def withActiveMqBidiFlow[S, T](sourceEndpoint: String, sinkEndpoint: String)(test: Flow[Person, Person, ActorRef] => ActorRef): Unit = {
+    val ref = test(ActiveMqFlow.apply[Person, Person](sourceEndpoint, sinkEndpoint))
+    terminateEndpoint(ref)
+  }
 
   /**
    * Creates a request-response flow with an ActiveMqSource, acknowledging sink and bidi-flow to join them.
    */
-  def withReqRespBidiFlow[S, T](sourceEndpoint: String)(test: Flow[Person, Person, NotUsed] => Any): Any = {
-    test(ActiveMqReqRespFlow[Person, Person](sourceEndpoint))
+  def withReqRespBidiFlow[S, T](sourceEndpoint: String)(test: Flow[Person, Person, ActorRef] => ActorRef): Any = {
+    val ref = test(ActiveMqReqRespFlow[Person, Person](sourceEndpoint))
+    terminateEndpoint(ref)
   }
 
   /**

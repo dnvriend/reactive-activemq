@@ -32,7 +32,7 @@ class ActiveMqFlowTest extends ActiveMqTestSpec {
         withActiveMqBidiFlow("AckBidiFlowTestInput", "AckBidiFlowTestOutput") { flow =>
 
           val identityFlow = Flow[Person].map(identity)
-          flow.join(identityFlow).run()
+          val ref = flow.join(identityFlow).run()
 
           pub.sendNext(testPerson1)
 
@@ -49,6 +49,7 @@ class ActiveMqFlowTest extends ActiveMqTestSpec {
 
           pub.sendComplete()
           sub.cancel()
+          ref
         }
       }
     }

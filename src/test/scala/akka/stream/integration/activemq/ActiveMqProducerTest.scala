@@ -18,7 +18,7 @@ package akka.stream.integration
 package activemq
 
 import akka.stream.integration.PersonDomain.Person
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{ Keep, Source }
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -67,6 +67,8 @@ class ActiveMqProducerTest extends TestSpec {
   it should "send and receive 250 messages from the queue" in {
     val numberOfPersons = 250
     Source.repeat(testPerson1).take(numberOfPersons).runWith(ActiveMqProducer[Person]("PersonProducer")).toTry should be a 'success
-    ActiveMqConsumer[Person]("PersonConsumer").take(numberOfPersons).runWith(AckSink.seq).toTry should be a 'success
+    val (ref, fxs) = ActiveMqConsumer[Person]("PersonConsumer").take(numberOfPersons).toMat(AckSink.seq)(Keep.both).run()
+    fxs.toTry should be a 'success
+    terminateEndpoint(ref)
   }
 }

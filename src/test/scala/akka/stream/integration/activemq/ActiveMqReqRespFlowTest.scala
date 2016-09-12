@@ -17,6 +17,7 @@
 package akka.stream.integration
 package activemq
 
+import akka.actor.ActorRef
 import akka.stream.integration.PersonDomain.Person
 
 import scala.concurrent.Promise
@@ -31,12 +32,13 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   it should "support request-response for a single message" in {
     withBackendFlow { implicit backendFlow => flowProbe =>
       withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
+        var ref: ActorRef = null
         withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
           withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>
 
             // echo all received messages
             flowProbe.setAutoPilot(identity[Person] _)
-            testFlow.join(backendFlow).run()
+            ref = testFlow.join(backendFlow).run()
 
             sub.request(2)
             pub.sendNext(testPerson1)
@@ -49,6 +51,7 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
             pub.sendComplete()
           }
         }
+        ref
       }
     }
   }
@@ -56,12 +59,13 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
   it should "support request-response for a multiple messages" in {
     withBackendFlow { implicit backendFlow => flowProbe =>
       withReqRespBidiFlow("AckBidiFlowReqRespTestInput") { testFlow =>
+        var ref: ActorRef = null
         withTestTopicPublisher("AckBidiFlowReqRespTestInput") { pub =>
           withTestTopicSubscriber("AckBidiFlowReqRespTestOutput") { sub =>
 
             // echo all received messages
             flowProbe.setAutoPilot(identity[Person] _)
-            testFlow.join(backendFlow).run()
+            ref = testFlow.join(backendFlow).run()
 
             sub.request(2)
 
@@ -79,6 +83,7 @@ class ActiveMqReqRespFlowTest extends ActiveMqTestSpec {
             pub.sendComplete()
           }
         }
+        ref
       }
     }
   }

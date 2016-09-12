@@ -18,7 +18,7 @@ package akka.stream.integration
 package activemq
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.camel.CamelMessage
 import akka.stream.FlowShape
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
@@ -55,8 +55,8 @@ object ActiveMqFlow {
    * hooked up to `sink`. This constructor is intended for cases where responses are sent to a fixed ActiveMq
    * destination (i.e. the Sink)
    */
-  def apply[S, T, M1, M2](source: Source[AckUTup[S], M1], sink: Sink[AckUTup[T], M2])(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] = {
-    applyMat(source, sink)(Keep.none)
+  def apply[S, T, M1, M2](source: Source[AckUTup[S], M1], sink: Sink[AckUTup[T], M2])(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, M1] = {
+    applyMat(source, sink)(Keep.left)
   }
 
   def applyMat[S, T, M1, M2, Mat](source: Source[AckUTup[S], M1], sink: Sink[AckUTup[T], M2])(combineMat: (M1, M2) => Mat)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, Mat] = {
@@ -76,6 +76,6 @@ object ActiveMqFlow {
   /**
    * Create a bidi-flow that is linked up to an ActiveMqSource and ActiveMqSink by their configuration name
    */
-  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String, producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] =
-    ActiveMqFlow(ActiveMqConsumer[S](consumerName), AckActiveMqProducer[T](producerName, qos))
+  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String, producerName: String, qos: Int = 8)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, ActorRef] =
+    ActiveMqFlow.apply(ActiveMqConsumer.apply[S](consumerName), AckActiveMqProducer.apply[T](producerName, qos))
 }

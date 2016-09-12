@@ -18,14 +18,15 @@ package akka.stream.integration
 
 import java.util.UUID
 
-import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ ActorRef, ActorSystem, PoisonPill }
+import akka.camel.CamelExtension
 import akka.event.{ Logging, LoggingAdapter }
 import akka.stream.integration.activemq.{ ActiveMqConsumer, ActiveMqProducer }
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{ Keep, Source }
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
 import akka.stream.testkit.{ TestPublisher, TestSubscriber }
 import akka.stream.{ ActorMaterializer, Materializer }
+import akka.testkit.TestProbe
 import akka.util.Timeout
 import org.scalatest._
 import org.scalatest.concurrent.{ Eventually, ScalaFutures }
@@ -86,14 +87,30 @@ trait TestSpec extends FlatSpec
     f(TestSource.probe[Person].to(ActiveMqProducer[Person](endpoint)).run())
 
   def withTestTopicSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckUTup[Person]] => Unit): Unit =
-    f(ActiveMqConsumer[Person](endpoint).runWith(TestSink.probe[AckUTup[Person]]))
+    ActiveMqConsumer[Person](endpoint).testProbe(f)
 
   def withRequestResponseSubscriber(endpoint: String = "PersonConsumer")(f: TestSubscriber.Probe[AckTup[Person, Person]] => Unit): Unit =
-    f(ActiveMqConsumer[Person, Person](endpoint).runWith(TestSink.probe[AckTup[Person, Person]]))
+    ActiveMqConsumer[Person, Person](endpoint).testProbe(f)
 
-  implicit class SourceOps[A](src: Source[A, NotUsed]) {
-    def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit =
-      f(src.runWith(TestSink.probe(system)))
+  def terminateEndpoint(ref: ActorRef): Unit = {
+    killActors(ref)
+    CamelExtension(system).deactivationFutureFor(ref).toTry should be a 'success
+  }
+
+  def killActors(refs: ActorRef*): Unit = {
+    val tp = TestProbe()
+    refs.foreach { ref ⇒
+      tp watch ref
+      tp.send(ref, PoisonPill)
+      tp.expectTerminated(ref)
+    }
+  }
+
+  implicit class SourceOps[A](src: Source[A, ActorRef]) {
+    def testProbe(f: TestSubscriber.Probe[A] => Unit): Unit = {
+      val (ref, probe) = src.toMat(TestSink.probe(system))(Keep.both).run()
+      try f(probe) finally terminateEndpoint(ref)
+    }
   }
 
   def randomId = UUID.randomUUID.toString

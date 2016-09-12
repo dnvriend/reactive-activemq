@@ -18,33 +18,29 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.25"
+version := "0.0.26-SNAPSHOT"
 
 scalaVersion := "2.11.8"
-
-resolvers += Resolver.jcenterRepo
-
-resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-releases/"
 
 testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
-  val akkaVersion = "2.4.9"
-  val scalazVersion = "7.2.5"
+  val akkaVersion = "2.4.10"
+  val scalazVersion = "7.2.6"
   Seq(
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
-    "org.apache.activemq" % "activemq-camel" % "5.9.1",
-    "com.google.protobuf" % "protobuf-java" % "3.0.0",
+    "org.apache.activemq" % "activemq-camel" % "5.14.0",
+    "com.google.protobuf" % "protobuf-java" % "3.0.2",
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,
     "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    "org.scalatest" %% "scalatest" % "2.2.6" % Test
+    "org.scalatest" %% "scalatest" % "3.0.0" % Test
   )
 }
 

@@ -17,9 +17,7 @@
 package akka.stream.integration
 package activemq
 
-import akka.NotUsed
-import akka.actor.ActorSystem
-import akka.camel.CamelMessage
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.stream.FlowShape
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
 
@@ -56,8 +54,8 @@ object ActiveMqReqRespFlow {
    * `sink`. This constructor is intended for cases where responses are sent in line with the request-response pattern
    * (i.e. the Sink only completes the promise, the Source responds with the resolved value)
    */
-  def apply[S, T, M1, M2](source: Source[AckTup[T, S], M1], sink: Sink[AckTup[T, T], M2])(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] = {
-    applyMat(source, sink)(Keep.none)
+  def apply[S, T, M1, M2](source: Source[AckTup[T, S], M1], sink: Sink[AckTup[T, T], M2])(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, M1] = {
+    applyMat(source, sink)(Keep.left)
   }
 
   def applyMat[S, T, M1, M2, Mat](source: Source[AckTup[T, S], M1], sink: Sink[AckTup[T, T], M2])(combineMat: (M1, M2) => Mat)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, Mat] = {
@@ -77,6 +75,6 @@ object ActiveMqReqRespFlow {
   /**
    * Create a bidi-flow that is linked up to an ActiveMqSource that is expected to execute a request-response pattern
    */
-  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, NotUsed] =
-    apply(ActiveMqConsumer[T, S](consumerName), AckSink.complete[T])
+  def apply[S: CamelMessageExtractor, T: CamelMessageBuilder](consumerName: String)(implicit ec: ExecutionContext, system: ActorSystem): Flow[T, S, ActorRef] =
+    apply(ActiveMqConsumer.apply[T, S](consumerName), AckSink.complete[T])
 }

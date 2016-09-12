@@ -36,13 +36,14 @@ class ActiveMqFlowTest extends ActiveMqTestSpec {
 
           pub.sendNext(testPerson1)
 
-          sub.request(2)
+          sub.request(1)
           sub.expectNextPF {
             case (p: Promise[Unit], `testPerson1`) => p.success(())
           }
 
           pub.sendNext(testPerson2)
 
+          sub.request(1)
           sub.expectNextPF {
             case (p: Promise[Unit], `testPerson2`) => p.success(())
           }

@@ -56,7 +56,7 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
   }
 
   override def consumerEndpointUri(consumerName: String): String =
-    ConsumerConfig(system.settings.config.getConfig(consumerName), Some(consumerName)).endpoint
+    ConsumerConfig(system.settings.config.getConfig(consumerName), consumerName).endpoint
 
   override def producerEndpointUri(producerName: String): String =
     ProducerConfig(system.settings.config.getConfig(producerName)).endpoint

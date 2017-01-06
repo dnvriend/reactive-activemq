@@ -17,10 +17,11 @@
 package akka.stream.integration.activemq.extension.config
 
 import com.typesafe.config.Config
+import scalaz.syntax.std.boolean._
 
 object ConsumerConfig {
-  def apply(config: Config, name: Option[String] = None): ConsumerConfig = ConsumerConfig(
-    name.getOrElse(config.getString("name")),
+  def apply(config: Config, name: String): ConsumerConfig = ConsumerConfig(
+    config.hasPath("name") ? config.getString("name") | name,
     config.getString("conn"),
     config.getString("queue"),
     config.getString("concurrentConsumers")

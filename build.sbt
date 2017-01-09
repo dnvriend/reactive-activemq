@@ -25,21 +25,18 @@ scalaVersion := "2.11.8"
 testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
-  val akkaVersion = "2.4.10"
-  val scalazVersion = "7.2.6"
+  val akkaVersion = "2.4.16"
+  val akkaHttpVersion = "10.0.1"
+  val scalazVersion = "7.2.8"
   Seq(
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
+    "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "org.apache.activemq" % "activemq-camel" % "5.14.0",
     "com.google.protobuf" % "protobuf-java" % "3.0.2",
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % Test,
     "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "org.scalatest" %% "scalatest" % "3.0.0" % Test
   )
 }

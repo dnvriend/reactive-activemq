@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.26"
+version := "0.0.27"
 
 scalaVersion := "2.11.8"
 
@@ -31,13 +31,13 @@ libraryDependencies ++= {
   Seq(
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
-    "org.apache.activemq" % "activemq-camel" % "5.14.0",
-    "com.google.protobuf" % "protobuf-java" % "3.0.2",
-    "ch.qos.logback" % "logback-classic" % "1.1.7" % Test,
-    "org.scalatest" %% "scalatest" % "3.0.0" % Test
+    "org.apache.activemq" % "activemq-camel" % "5.14.3",
+    "com.google.protobuf" % "protobuf-java" % "3.1.0",
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
+    "ch.qos.logback" % "logback-classic" % "1.1.8" % Test,
+    "org.scalatest" %% "scalatest" % "3.0.1" % Test
   )
 }
 
@@ -66,3 +66,4 @@ headers := Map(
 )
 
 enablePlugins(AutomateHeaderPlugin)
+disablePlugins(BintrayPlugin)

@@ -14,7 +14,7 @@ Add the following to your `build.sbt`:
 ```scala
 resolvers += Resolver.jcenterRepo
 
-libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.25"
+libraryDependencies += "com.github.dnvriend" %% "reactive-activemq" % "0.0.27"
 ```
 
 ## Contribution policy ##
@@ -159,6 +159,11 @@ TBD
 TBD
 
 # Whats new?
+- v0.0.27 (2017-01-09)
+  - Akka 2.4.9 -> 2.4.16
+  - Merged PR #7 [Merlijn Boogerd][mboogerd] - Update dependencies, thanks!
+  - Merged PR #6 [Merlijn Boogerd][mboogerd] - Allow overriding the name of consumers using a name configuration key, thanks!
+
 - v0.0.25 (2016-08-20)
   - Akka 2.4.8 -> 2.4.9
 

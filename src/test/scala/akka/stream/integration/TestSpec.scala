@@ -20,7 +20,7 @@ import java.util.UUID
 
 import akka.actor.{ ActorRef, ActorSystem, PoisonPill }
 import akka.camel.CamelExtension
-import akka.event.{ Logging, LoggingAdapter }
+import akka.event.{ Logging, LoggingAdapter, LogSource }
 import akka.stream.integration.activemq.{ ActiveMqConsumer, ActiveMqProducer }
 import akka.stream.scaladsl.{ Keep, Source }
 import akka.stream.testkit.scaladsl.{ TestSink, TestSource }
@@ -63,7 +63,10 @@ trait TestSpec extends FlatSpec
   implicit val system: ActorSystem = ActorSystem()
   implicit val mat: Materializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
-  val log: LoggingAdapter = Logging(system, this.getClass)
+  implicit val logSource: LogSource[TestSpec] = new LogSource[TestSpec] {
+    def genString(a: TestSpec) = a.getClass.getSimpleName
+  }
+  val log: LoggingAdapter = Logging(system, this)
   implicit val pc: PatienceConfig = PatienceConfig(timeout = 60.seconds)
   implicit val timeout = Timeout(30.seconds)
 

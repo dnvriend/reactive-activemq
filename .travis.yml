@@ -9,6 +9,7 @@ before_install:
   - docker inspect activemq
 scala:
   - "2.11.8"
+  - "2.12.1"
 jdk:
   - oraclejdk8
 branches:

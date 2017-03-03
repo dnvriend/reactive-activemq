@@ -20,7 +20,9 @@ organization := "com.github.dnvriend"
 
 version := "0.0.27"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.1"
+
+crossScalaVersions := Seq(scalaVersion.value, "2.11.8")
 
 testOptions in Test += Tests.Argument("-oD")
 

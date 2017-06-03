@@ -1,12 +1,11 @@
 # reactive-activemq #
-
-[![Join the chat at https://gitter.im/dnvriend/reactive-activemq](https://badges.gitter.im/dnvriend/reactive-activemq.svg)](https://gitter.im/dnvriend/reactive-activemq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/dnvriend/reactive-activemq.svg?branch=master)](https://travis-ci.org/dnvriend/reactive-activemq)
 [![Download](https://api.bintray.com/packages/dnvriend/maven/reactive-activemq/images/download.svg)](https://bintray.com/dnvriend/maven/reactive-activemq/_latestVersion)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/432149cd0714497dbd97b235f2fe94cd)](https://www.codacy.com/app/dnvriend/reactive-activemq?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dnvriend/reactive-activemq&amp;utm_campaign=Badge_Grade)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 reactive-activemq is an [akka-streams][akka-streams] compatible connector for [ActiveMq][amq] providing two components, the [ActiveMqConsumer][amqconsumer] and [ActiveMqProducer][amqproducer] that can consume and produce messages with [VirtualTopic][vt] semantics, using [akka-streams][akka-streams]'s [demand stream][demand] feature to control the message flow between components. This project is very much work in progress.
+
+# Notice
+This project is not being maintained and/or actively developed anymore. For a more modern, scalable and production ready solution please use [Apache Kafka](http://kafka.apache.org) or better yet the [Confluent Platform](https://www.confluent.io/product/confluent-open-source/) in combination with [Reactive Kafka](https://github.com/akka/reactive-kafka) or [Kafka Streams](https://www.confluent.io/blog/introducing-kafka-streams-stream-processing-made-simple/).
 
 ## Installation
 Add the following to your `build.sbt`:

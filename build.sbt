@@ -20,18 +20,20 @@ organization := "com.github.dnvriend"
 
 version := "0.0.27"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.3"
+
+crossScalaVersions := Seq("2.11.11", "2.12.3")
 
 testOptions in Test += Tests.Argument("-oD")
 
 libraryDependencies ++= {
-  val akkaVersion = "2.4.16"
-  val akkaHttpVersion = "10.0.1"
+  val akkaVersion = "2.5.4"
   val scalazVersion = "7.2.8"
+  val sprayJsonVersion = "1.3.3"
   Seq(
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+    "io.spray" %% "spray-json" % sprayJsonVersion,
     "org.scalaz" %% "scalaz-core" % scalazVersion,
     "org.apache.activemq" % "activemq-camel" % "5.14.3",
     "com.google.protobuf" % "protobuf-java" % "3.1.0",

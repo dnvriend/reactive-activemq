@@ -45,7 +45,7 @@ class ActiveMqExtensionImpl(val system: ExtendedActorSystem) extends Extension w
   }
 
   private def createComponent(componentName: String, amqConfig: ActiveMqConfig): Unit = {
-    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, s"${amqConfig.transport}://${amqConfig.host}:${amqConfig.port}")
+    val connectionFactory = new ActiveMQConnectionFactory(amqConfig.user, amqConfig.pass, amqConfig.url)
     val jmsConfiguration: JmsConfiguration = new JmsConfiguration()
     jmsConfiguration.setConnectionFactory(connectionFactory)
     val ctx = CamelExtension(system).context

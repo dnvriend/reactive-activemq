@@ -21,13 +21,15 @@ import com.typesafe.config.Config
 import scalaz.syntax.std.boolean._
 
 object ActiveMqConfig {
-  def apply(config: Config): ActiveMqConfig = ActiveMqConfig(
-    config.getString("host"),
-    config.getString("port"),
-    config.getString("user"),
-    config.getString("pass"),
-    config.hasPath("transport").option(config.getString("transport")).getOrElse("nio")
-  )
+  def apply(config: Config): ActiveMqConfig = {
+    val url = config.hasPath("url").option(config.getString("url")).getOrElse {
+      val host = config.getString("host")
+      val port = config.getString("port")
+      val transport = config.hasPath("transport").option(config.getString("transport")).getOrElse("nio")
+      s"$transport://$host:$port"
+    }
+    ActiveMqConfig(url, config.getString("user"), config.getString("pass"))
+  }
 }
 
-case class ActiveMqConfig(host: String, port: String, user: String, pass: String, transport: String)
+case class ActiveMqConfig(url: String, user: String, pass: String)

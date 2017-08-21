@@ -74,8 +74,8 @@ amq1 {
 }
 
 amq2 {
-  host = "boot2docker"
-  port = "61616"
+  // url can also be used instead of host+port
+  url = "tcp://boot2docker:61616"
   user = "amq"
   pass = "amq"
 }
@@ -158,6 +158,12 @@ TBD
 TBD
 
 # Whats new?
+- v0.0.28 (not yet released)
+  - akka 2.4.16 -> 2.5.4 (please use v0.0.27 for akka 2.4.x)
+  - enabled cross building for scala 2.12
+  - allow configuration of the activemq url directly instead of only transport, host and port (to allow specifying other options in the url such as failover)
+  - Dropped akka-http-spray-json dependency and depend on spray-json instead
+
 - v0.0.27 (2017-01-09)
   - Akka 2.4.9 -> 2.4.16
   - Merged PR #7 [Merlijn Boogerd][mboogerd] - Update dependencies, thanks!

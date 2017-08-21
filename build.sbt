@@ -18,7 +18,7 @@ name := "reactive-activemq"
 
 organization := "com.github.dnvriend"
 
-version := "0.0.27"
+version := "0.0.28"
 
 scalaVersion := "2.12.3"
 

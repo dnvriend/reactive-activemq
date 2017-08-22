@@ -68,4 +68,3 @@ headers := Map(
 )
 
 enablePlugins(AutomateHeaderPlugin)
-disablePlugins(BintrayPlugin)
